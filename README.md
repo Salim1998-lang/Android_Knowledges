@@ -67,6 +67,9 @@ src/test/kotlin/handbook/
 - [Разбор: Трейдинговая платформа](docs/system-design/01-trading-platform.md) — REST + WebSocket,
   `BigDecimal` для денег, графики через WebView, буферизация real-time обновлений. + вопросы для
   самопроверки.
+- [Разбор: Лента новостей](docs/system-design/02-news-feed.md) — чистый REST + JSON, курсорная
+  пагинация, SSOT и офлайн, оптимистичные обновления, HTML + нативный рендеринг, плавная прокрутка.
+  + вопросы для самопроверки.
 
 ## Требования / запуск
 
