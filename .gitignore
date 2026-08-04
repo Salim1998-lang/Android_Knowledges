@@ -1,6 +1,7 @@
 ### Gradle ###
 .gradle/
 build/
+local.properties
 
 ### IntelliJ IDEA ###
 .idea/
@@ -34,9 +35,24 @@ bin/
 ### VS Code ###
 .vscode/
 
+### Claude Code ###
+.claude/settings.local.json
+
 ### Mac OS ###
 .DS_Store
 
 ### Исходные сканы книг (копирайт — не коммитим) ###
 /Архив/
 /archive-src/
+
+### Секреты — НИКОГДА не коммитим ###
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+secrets.properties
+keystore.properties
+*.pem
+*.key
+*.p12
