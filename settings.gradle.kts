@@ -1,1 +1,1 @@
-rootProject.name = "Coroutines"
+rootProject.name = "AndroidHandbook"
