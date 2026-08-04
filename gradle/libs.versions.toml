@@ -1,0 +1,16 @@
+[versions]
+kotlin = "2.0.21"
+coroutines = "1.9.0"
+junit = "5.11.3"
+
+[libraries]
+# Ядро корутин: suspend-функции, билдеры, Flow, Channel, Dispatchers
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+# Тестирование корутин: runTest, TestDispatcher, virtual time, advanceUntilIdle
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version = "1.11.3" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
