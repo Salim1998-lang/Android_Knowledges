@@ -569,12 +569,22 @@ Android). Единственно верного ответа нет — реша
 
 ## Что почитать (ссылки из книги)
 
-- eToro использует REST + WebSocket + FIX — [про архитектуру](https://www.etoro.com), интерактивные
-  графики на [TradingView](https://www.tradingview.com/).
-- Trade Republic для Android (2024) — [REST + WebSocket](https://engineering.traderepublic.com).
-- Robinhood — [графики](https://robinhood.com), нативная библиотека
-  [Spark](https://github.com/robinhood/spark).
-- Библиотеки графиков: [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart),
-  [Charts (iOS)](https://github.com/ChartsOrg/Charts), [SciChart](https://www.scichart.com/).
-- [API Gateway (Wikipedia)](https://en.wikipedia.org/wiki/API_management#gateway).
-- Coinbase — [WebSocket для real-time данных](https://docs.cdp.coinbase.com/exchange/docs/websocket-overview).
+1. eToro использует REST, WebSocket и FIX (Financial Information eXchange) —
+   [пресс-релиз](https://www.etoro.com/news-and-analysis/crypto/etoros-professional-crypto-exchange-adds-institutional-grade-product-suite-launches-revolutionary-inverted-fee-model-press-release/).
+2. Состояние приложения Trade Republic для Android в 2024 году (REST + WebSocket) —
+   [engineering.traderepublic.com](https://engineering.traderepublic.com/state-of-android-at-tr-2024-edition-bc032620b83e).
+3. Шлюз API — [API Gateway (Wikipedia)](https://en.wikipedia.org/wiki/API_management#gateway).
+4. Графики в приложении Robinhood — [using-charts](https://robinhood.com/us/en/support/articles/using-charts/).
+5. Графики в приложении E*TRADE —
+   [power-etrade-charting-enhancements](https://us.etrade.com/knowledge/library/getting-started/power-etrade-charting-enhancements).
+6. [MPAndroidChart](https://github.com/PhilJay/MPAndroidChart).
+7. Библиотека Charts для iOS — [ChartsOrg/Charts](https://github.com/ChartsOrg/Charts).
+8. [TradingView](https://www.tradingview.com/).
+9. В eToro используется TradingView —
+   [пресс-релиз](https://www.etoro.com/news-and-analysis/press-releases/etoro-announces-major-charting-upgrade-in-partnership-with-tradingview).
+10. Библиотека Robinhood Spark для Android — [robinhood/spark](https://github.com/robinhood/spark).
+11. [SciChart](https://www.scichart.com/).
+12. Применение SciChart в индустрии —
+    [ios-android-native-apps-vs-javascript](https://www.scichart.com/blog/ios-android-native-apps-vs-javascript).
+13. Применение WebSocket для обновления данных в реальном времени в Coinbase —
+    [websocket-overview](https://docs.cdp.coinbase.com/exchange/docs/websocket-overview).
