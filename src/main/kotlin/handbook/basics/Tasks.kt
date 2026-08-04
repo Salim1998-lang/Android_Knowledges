@@ -20,28 +20,63 @@ object BasicsTasks {
     // ═══════════════════════════ Лёгкие (1–8) ═══════════════════════════
 
     /** Л1. Приостановиться на 100 мс и вернуть переданное значение. */
-    suspend fun delayedValue(value: Int): Int = TODO()
+    suspend fun delayedValue(value: Int): Int {
+        delay(100)
+        return value
+    }
 
     /** Л2. Подождать 50 мс и вернуть "Привет, <name>!". */
-    suspend fun greet(name: String): String = TODO()
+    suspend fun greet(name: String): String {
+        delay(50)
+        return "Привет, $name!"
+    }
 
     /** Л3. Подождать 10 мс и вернуть сумму a + b. */
-    suspend fun sumAfterDelay(a: Int, b: Int): Int = TODO()
+    suspend fun sumAfterDelay(a: Int, b: Int): Int {
+        delay(10)
+        return a + b
+    }
 
     /** Л4. Вызвать a() и b() ПОСЛЕДОВАТЕЛЬНО и вернуть их сумму. */
-    suspend fun sequentialSum(a: suspend () -> Int, b: suspend () -> Int): Int = TODO()
+    suspend fun sequentialSum(a: suspend () -> Int, b: suspend () -> Int): Int {
+        val aRes = a.invoke()
+        val bRes = b.invoke()
+        return aRes + bRes
+    }
 
     /** Л5. Подождать 10 мс и вернуть удвоенное значение. */
-    suspend fun doubled(x: Int): Int = TODO()
+    suspend fun doubled(x: Int): Int {
+        delay(10)
+        return 2 * x
+    }
 
     /** Л6. Вернуть список из [times] копий [value]; перед каждым добавлением — delay(5). */
-    suspend fun repeatValue(value: String, times: Int): List<String> = TODO()
+    suspend fun repeatValue(value: String, times: Int): List<String> {
+        val result = mutableListOf<String>()
+        repeat(times) {
+            delay(5)
+            result.add(value)
+        }
+        return result
+    }
 
     /** Л7. Обратный отсчёт: вернуть [n, n-1, ..., 1], каждый шаг с delay(5). */
-    suspend fun countdown(n: Int): List<Int> = TODO()
+    suspend fun countdown(n: Int): List<Int> {
+        val result = mutableListOf<Int>()
+        var k = n
+        while (k >= 1) {
+            delay(5)
+            result.add(k)
+            k--
+        }
+        return result
+    }
 
     /** Л8. Запустить дочернюю корутину, которая вызовет [action]; дождаться её (join). */
-    suspend fun runInChild(action: () -> Unit) { TODO() }
+    suspend fun runInChild(action: () -> Unit) = coroutineScope {
+        val job = launch { action() }
+        job.join()
+    }
 
     // ═══════════════════════════ Средние (9–15) ═══════════════════════════
 
@@ -54,7 +89,16 @@ object BasicsTasks {
      *
      * Спойлер: n раз launch { delay((n-i)*10); result += i }; читать список после coroutineScope.
      */
-    suspend fun collectInLaunchOrder(n: Int): List<Int> = TODO()
+    suspend fun collectInLaunchOrder(n: Int): List<Int> = coroutineScope {
+        val result = mutableListOf<Int>()
+        for (i in 0 until  n) {
+            launch {
+                delay((n - i) * 10L)
+                result.add(i)
+            }
+        }
+        result
+    }
 
     /**
      * С10. Запусти n корутин, каждая вызывает onEach(i). Дождись всех, верни n.
@@ -64,7 +108,14 @@ object BasicsTasks {
      *
      * Спойлер: coroutineScope { repeat(n) { launch { onEach(it) } } }; n.
      */
-    suspend fun launchN(n: Int, onEach: (Int) -> Unit): Int = TODO()
+    suspend fun launchN(n: Int, onEach: (Int) -> Unit): Int = coroutineScope {
+        for (i in 0 until n) {
+            launch {
+                onEach(i)
+            }
+        }
+        n
+    }
 
     /**
      * С11. Применяй ops к start ПОСЛЕДОВАТЕЛЬНО (каждый к результату предыдущего), верни итог.
@@ -73,7 +124,14 @@ object BasicsTasks {
      *
      * Спойлер: var acc = start; for (op in ops) acc = op(acc).
      */
-    suspend fun sequentialChain(start: Int, ops: List<suspend (Int) -> Int>): Int = TODO()
+    suspend fun sequentialChain(start: Int, ops: List<suspend (Int) -> Int>): Int {
+        var res = start
+        for (i in ops.indices) {
+            val op = ops[i]
+            res = op(res)
+        }
+        return res
+    }
 
     /**
      * С12. Просуммируй values, делая delay(5) перед каждым прибавлением. Верни сумму.
@@ -83,7 +141,14 @@ object BasicsTasks {
      *
      * Спойлер: for (v in values) { delay(5); sum += v }.
      */
-    suspend fun delayedSum(values: List<Int>): Int = TODO()
+    suspend fun delayedSum(values: List<Int>): Int {
+        var sum = 0
+        for (value in values) {
+            delay(5)
+            sum += value
+        }
+        return sum
+    }
 
     /**
      * С13. Построй приветствия для всех имён ПОСЛЕДОВАТЕЛЬНО, используя собственный greet.
@@ -93,7 +158,11 @@ object BasicsTasks {
      *
      * Спойлер: for (name in names) result += greet(name)  (свой greet, не из solutions).
      */
-    suspend fun buildGreetings(names: List<String>): List<String> = TODO()
+    suspend fun buildGreetings(names: List<String>): List<String> {
+        val result = mutableListOf<String>()
+        for (name in names) result.add(greet(name))
+        return result
+    }
 
     /**
      * С14. Запусти n корутин, каждая делает delay(1) и counter++. Дождись всех и верни counter.
@@ -104,7 +173,18 @@ object BasicsTasks {
      *
      * Спойлер: coroutineScope { repeat(n){ launch { delay(1); counter++ } } }; вернуть counter после.
      */
-    suspend fun counterWithLaunches(n: Int): Int = TODO()
+    suspend fun counterWithLaunches(n: Int): Int {
+        var counter = 0
+        coroutineScope {
+            repeat(n) {
+                launch {
+                    delay(1)
+                    counter++
+                }
+            }
+        }
+        return counter
+    }
 
     /**
      * С15. Запусти по корутине на каждую задержку; корутина добавляет свой индекс после своей задержки.
@@ -116,7 +196,18 @@ object BasicsTasks {
      *
      * Спойлер: coroutineScope { for i launch { delay(delays[i]); result += i } }.
      */
-    suspend fun orderedByDelay(delays: List<Long>): List<Int> = TODO()
+    suspend fun orderedByDelay(delays: List<Long>): List<Int> {
+        val result = mutableListOf<Int>()
+        coroutineScope {
+            for (i in delays.indices) {
+                launch {
+                    delay(delays[i])
+                    result.add(i)
+                }
+            }
+        }
+        return result
+    }
 
     // ═══════════════════════════ Сложные (16–20) ═══════════════════════════
 
@@ -129,8 +220,19 @@ object BasicsTasks {
      *
      * Спойлер: repeat(times){ try return block() catch { last=e; if(attempt<times-1) delay(delayMs) } }; throw last.
      */
-    suspend fun <T> retry(times: Int, delayMs: Long = 20, block: suspend () -> T): T = TODO()
-
+    suspend fun <T> retry(times: Int, delayMs: Long = 20, block: suspend () -> T): T {
+        require(times >= 1) { "times must be >= 1" }
+        var last: Throwable? = null
+        repeat(times) { attempt ->
+            try {
+                return block()
+            } catch (e: Throwable) {
+                last = e
+                if (attempt < times - 1) delay(delayMs)
+            }
+        }
+        throw last!!
+    }
     /**
      * СЛ17. Опрашивай produce() с delay(5) между попытками, пока не вернёт target. Верни число попыток
      *       (включая успешную).
@@ -140,7 +242,14 @@ object BasicsTasks {
      *
      * Спойлер: var n=1; while (produce() != target) { delay(5); n++ }; n.
      */
-    suspend fun pollUntil(target: Int, produce: suspend () -> Int): Int = TODO()
+    suspend fun pollUntil(target: Int, produce: suspend () -> Int): Int {
+        var times = 1
+        while (produce() != target) {
+            delay(5)
+            times++
+        }
+        return times
+    }
 
     /**
      * СЛ18. Факториал n через РЕКУРСИЮ с приостановкой (на каждом шаге delay(1)).
@@ -150,7 +259,11 @@ object BasicsTasks {
      *
      * Спойлер: if (n <= 1) 1 else { delay(1); n * factorial(n-1) }.
      */
-    suspend fun factorial(n: Int): Long = TODO()
+    suspend fun factorial(n: Int): Long {
+        if (n == 1 || n == 0) return 1L
+        delay(1)
+        return n * factorial(n - 1)
+    }
 
     /**
      * СЛ19. Создай ЛЕНИВУЮ корутину, которая вызовет onStart. Если trigger — запусти её и верни true;
@@ -161,7 +274,18 @@ object BasicsTasks {
      *
      * Спойлер: launch(start = CoroutineStart.LAZY){ onStart() }; trigger ? job.join() : job.cancel().
      */
-    suspend fun lazyStart(trigger: Boolean, onStart: () -> Unit): Boolean = TODO()
+    suspend fun lazyStart(trigger: Boolean, onStart: () -> Unit): Boolean = coroutineScope {
+        val job = launch(start = CoroutineStart.LAZY) {
+            onStart()
+        }
+        if (trigger) {
+            job.join()
+            true
+        } else {
+            job.cancel()
+            false
+        }
+    }
 
     /**
      * СЛ20. n шагов: на каждом delay(1) и sum += step. Верни итог.
@@ -171,7 +295,14 @@ object BasicsTasks {
      *
      * Спойлер: repeat(n) { delay(1); sum += step }.
      */
-    suspend fun accumulate(n: Int, step: Int): Int = TODO()
+    suspend fun accumulate(n: Int, step: Int): Int = coroutineScope {
+        var accumulated = 0
+        repeat(n) {
+            delay(1.milliseconds)
+            accumulated += step
+        }
+        accumulated
+    }
 
     // ═══════════════════════════ Дополнительные (21–23) ═══════════════════════════
 

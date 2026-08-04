@@ -30,36 +30,67 @@ object StructuredTasks {
     // ═══════════════════════════ Лёгкие (1–8) ═══════════════════════════
 
     /** Л1. Запустить a() и b() ПАРАЛЛЕЛЬНО (async) и вернуть Pair(a, b). */
-    suspend fun <A, B> awaitBoth(a: suspend () -> A, b: suspend () -> B): Pair<A, B> = TODO()
+    suspend fun <A, B> awaitBoth(a: suspend () -> A, b: suspend () -> B): Pair<A, B> = coroutineScope {
+        val a = async { a.invoke() }
+        val b = async { b.invoke() }
+        a.await() to b.await()
+    }
 
     /** Л2. Сумма a() + b() параллельно. */
-    suspend fun parallelSum(a: suspend () -> Int, b: suspend () -> Int): Int = TODO()
+    suspend fun parallelSum(a: suspend () -> Int, b: suspend () -> Int): Int = coroutineScope {
+        val a = async { a() }
+        val b = async { b() }
+        a.await() + b.await()
+    }
 
     /** Л3. Произведение a() * b() параллельно. */
-    suspend fun parallelProduct(a: suspend () -> Int, b: suspend () -> Int): Int = TODO()
+    suspend fun parallelProduct(a: suspend () -> Int, b: suspend () -> Int): Int = coroutineScope {
+        val a = async { a() }
+        val b = async { b() }
+        a.await() * b.await()
+    }
 
     /** Л4. Скомбинировать два параллельных результата функцией [combine]. */
     suspend fun <A, B, R> combineAsync(
         a: suspend () -> A,
         b: suspend () -> B,
         combine: (A, B) -> R,
-    ): R = TODO()
+    ): R = coroutineScope {
+        val a = async { a() }
+        val b = async { b() }
+        combine(a.await(), b.await())
+    }
 
     /** Л5. Максимум из двух параллельно вычисленных чисел. */
-    suspend fun parallelMax(a: suspend () -> Int, b: suspend () -> Int): Int = TODO()
+    suspend fun parallelMax(a: suspend () -> Int, b: suspend () -> Int): Int = coroutineScope {
+        val a = async { a() }
+        val b = async { b() }
+        maxOf(a.await(), b.await())
+    }
 
     /** Л6. Запустить все блоки ПАРАЛЛЕЛЬНО и дождаться завершения всех. */
-    suspend fun runAllParallel(blocks: List<suspend () -> Unit>) { TODO() }
+    suspend fun runAllParallel(blocks: List<suspend () -> Unit>) = coroutineScope {
+        val results = mutableListOf<Deferred<Unit>>()
+        blocks.forEach { block -> results.add(async { block() }) }
+        results.awaitAll()
+    }
 
     /** Л7. Выполнить block() в async, дождаться и удвоить результат. */
-    suspend fun asyncDouble(block: suspend () -> Int): Int = TODO()
+    suspend fun asyncDouble(block: suspend () -> Int): Int = coroutineScope {
+        async { block() }.await() * 2
+    }
 
     /** Л8. Три параллельных вычисления в Triple. */
     suspend fun <A, B, C> tripleParallel(
         a: suspend () -> A,
         b: suspend () -> B,
         c: suspend () -> C,
-    ): Triple<A, B, C> = TODO()
+    ): Triple<A, B, C> = coroutineScope {
+        val a = async { a() }
+        val b = async { b() }
+        val c = async { c() }
+        Triple(a.await(), b.await(), c.await())
+    }
 
     // ═══════════════════════════ Средние (9–15) ═══════════════════════════
 
@@ -71,7 +102,9 @@ object StructuredTasks {
      *
      * Спойлер: ids.map { async { load(it) } }.awaitAll().
      */
-    suspend fun <T> loadAll(ids: List<Int>, load: suspend (Int) -> T): List<T> = TODO()
+    suspend fun <T> loadAll(ids: List<Int>, load: suspend (Int) -> T): List<T> = coroutineScope {
+        ids.map { id -> async { load(id) } }.awaitAll()
+    }
 
     /**
      * С10. Сумма результатов всех blocks, посчитанных ПАРАЛЛЕЛЬНО.
@@ -80,7 +113,9 @@ object StructuredTasks {
      *
      * Спойлер: blocks.map { async { it() } }.awaitAll().sum().
      */
-    suspend fun parallelSumList(blocks: List<suspend () -> Int>): Int = TODO()
+    suspend fun parallelSumList(blocks: List<suspend () -> Int>): Int = coroutineScope {
+        blocks.map { block -> async { block() } }.awaitAll().sum()
+    }
 
     /**
      * С11. Применить transform ко всем items ПАРАЛЛЕЛЬНО, сохранив порядок items.
@@ -90,7 +125,9 @@ object StructuredTasks {
      *
      * Спойлер: items.map { async { transform(it) } }.awaitAll().
      */
-    suspend fun <T, R> parallelMap(items: List<T>, transform: suspend (T) -> R): List<R> = TODO()
+    suspend fun <T, R> parallelMap(items: List<T>, transform: suspend (T) -> R): List<R> = coroutineScope {
+        items.map { item -> async { transform(item) } }.awaitAll()
+    }
 
     /**
      * С12. Раздели список пополам, просуммируй половины ПАРАЛЛЕЛЬНО, верни сумму итогов.
@@ -99,7 +136,13 @@ object StructuredTasks {
      *
      * Спойлер: async { half1.sum() } и async { half2.sum() }, затем a.await() + b.await().
      */
-    suspend fun sumHalvesInParallel(list: List<Int>): Int = TODO()
+    suspend fun sumHalvesInParallel(list: List<Int>): Int = coroutineScope {
+        val half1 = list.subList(0, list.size / 2)
+        val half2 = list.subList(list.size / 2, list.size)
+        val a = async { half1.sum() }
+        val b = async { half2.sum() }
+        a.await() + b.await()
+    }
 
     /**
      * С13. Отфильтруй items по suspend-предикату; порядок сохраняется.
@@ -110,7 +153,10 @@ object StructuredTasks {
      *
      * Спойлер: async на каждый item возвращает пару (item, predicate(item)); awaitAll; затем filter+map.
      */
-    suspend fun <T> parallelFilter(items: List<T>, predicate: suspend (T) -> Boolean): List<T> = TODO()
+    suspend fun <T> parallelFilter(items: List<T>, predicate: suspend (T) -> Boolean): List<T> = coroutineScope {
+        items.map { item -> async { item to predicate(item) } }
+            .awaitAll().filter { it.second }.map { it.first }
+    }
 
     /**
      * С14. Сколько items удовлетворяют suspend-предикату (вычисляй предикаты параллельно).
@@ -120,7 +166,9 @@ object StructuredTasks {
      *
      * Спойлер: async → предикат, awaitAll, затем count/фильтр по true.
      */
-    suspend fun <T> parallelCount(items: List<T>, predicate: suspend (T) -> Boolean): Int = TODO()
+    suspend fun <T> parallelCount(items: List<T>, predicate: suspend (T) -> Boolean): Int = coroutineScope {
+        items.map { item -> async { item to predicate(item) } }.awaitAll().filter { it.second }.size
+    }
 
     /**
      * С15. Запусти по async на каждую задержку из delays (async i ждёт delays[i]); верни список индексов.
@@ -130,7 +178,9 @@ object StructuredTasks {
      *
      * Спойлер: delays.mapIndexed { i, d -> async { delay(d); i } }.awaitAll().
      */
-    suspend fun awaitAllPreservesOrder(delays: List<Long>): List<Int> = TODO()
+    suspend fun awaitAllPreservesOrder(delays: List<Long>): List<Int> = coroutineScope {
+        delays.mapIndexed { index, lng -> async { index to delay(lng) } }.awaitAll().map { it.first }
+    }
 
     // ═══════════════════════════ Сложные (16–20) ═══════════════════════════
 
@@ -147,7 +197,16 @@ object StructuredTasks {
         items: List<T>,
         concurrency: Int,
         transform: suspend (T) -> R,
-    ): List<R> = TODO()
+    ): List<R> = coroutineScope {
+        val semaphore = Semaphore(concurrency)
+        items.map {
+            async {
+                semaphore.withPermit {
+                    transform(it)
+                }
+            }
+        }.awaitAll()
+    }
 
     /**
      * СЛ17. Обработай items чанками по chunkSize: ВНУТРИ чанка — параллельно, чанки — последовательно.
@@ -163,7 +222,14 @@ object StructuredTasks {
         items: List<T>,
         chunkSize: Int,
         transform: suspend (T) -> R,
-    ): List<R> = TODO()
+    ): List<R> {
+        val res = mutableListOf<R>()
+        for (item in items.chunked(chunkSize)) {
+            val done = coroutineScope { item.map { async { transform(it) } }.awaitAll() }
+            res += done
+        }
+        return res
+    }
 
     /**
      * СЛ18. Сумма всех чисел матрицы: строки суммируются ПАРАЛЛЕЛЬНО, затем складываются их итоги.
@@ -172,7 +238,16 @@ object StructuredTasks {
      *
      * Спойлер: matrix.map { async { сумма строки с delay } }.awaitAll().sum().
      */
-    suspend fun nestedParallelSum(matrix: List<List<Int>>): Int = TODO()
+    suspend fun nestedParallelSum(matrix: List<List<Int>>): Int = coroutineScope {
+        matrix.map { async {
+            var s = 0
+            for (item in it) {
+                delay(1)
+                s += item
+            }
+            s
+        } }.awaitAll().sum()
+    }
 
     /**
      * СЛ19. Примени transform ко всем items параллельно, но ИЗОЛИРУЙ ошибки: падение одного не должно
@@ -187,7 +262,17 @@ object StructuredTasks {
     suspend fun <T, R> parallelMapCatching(
         items: List<T>,
         transform: suspend (T) -> R,
-    ): List<Result<R>> = TODO()
+    ): List<Result<R>> = supervisorScope {
+        items.map { async { transform(it) } }.map { deferred ->
+            try {
+                Result.success(deferred.await())
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                Result.failure(e)
+            }
+        }
+    }
 
     /**
      * СЛ20. Скользящие окна длины window: сумма каждого окна, посчитанная ПАРАЛЛЕЛЬНО.
@@ -198,7 +283,10 @@ object StructuredTasks {
      *
      * Спойлер: values.windowed(window).map { async { it.sum() } }.awaitAll().
      */
-    suspend fun windowedSums(values: List<Int>, window: Int): List<Int> = TODO()
+    suspend fun windowedSums(values: List<Int>, window: Int): List<Int> = coroutineScope {
+        require(values.size >= window)
+        values.windowed(window).map { async { it.sum() } }.awaitAll()
+    }
 
     // ═══════════════════════════ Дополнительные (21–23) ═══════════════════════════
 
@@ -208,7 +296,14 @@ object StructuredTasks {
      * блоки исполнялись строго последовательно в порядке списка, а не разом. Вернуть результаты
      * в порядке списка. Ключ: LAZY-корутина не стартует, пока её не разбудят start()/await().
      */
-    suspend fun <T> runLazySequentially(blocks: List<suspend () -> T>): List<T> = TODO()
+    suspend fun <T> runLazySequentially(blocks: List<suspend () -> T>): List<T> = coroutineScope {
+        val blocks1 = blocks.map { async(start = CoroutineStart.LAZY) { it.invoke() } }
+        val res = mutableListOf<T>()
+        blocks1.forEach {
+            res.add(it.await())
+        }
+        res
+    }
 
     /**
      * Д22. `withContext` vs `coroutineScope`. Выполнить a() и b() ПОСЛЕДОВАТЕЛЬНО, каждую — в
@@ -219,12 +314,35 @@ object StructuredTasks {
         ctx: CoroutineContext,
         a: suspend () -> A,
         b: suspend () -> B,
-    ): Pair<A, B> = TODO()
+    ): Pair<A, B> = withContext(ctx) {
+        Pair(a(), b())
+    }
 
     /**
      * Д23. Структурный запуск side-effect'ов. Запустить каждый блок как СТРУКТУРНОГО ребёнка
      * scope так, чтобы функция не вернулась, пока ВСЕ не отработают. Детей НЕ отвязывать:
      * никаких `launch(Job())` и `GlobalScope` — иначе scope не дождётся и словишь утечку.
      */
-    suspend fun runStructured(blocks: List<suspend () -> Unit>) { TODO() }
+    suspend fun runStructured(blocks: List<suspend () -> Unit>) = supervisorScope {
+        blocks.map { block -> async { block() } }.awaitAll()
+    }
+}
+
+fun main() = runBlocking {
+    try {
+        coroutineScope {
+            launch {
+                try { repeat(1000) { delay(100) } }
+                finally { println("sibling cleanup") }
+            }
+            launch {
+                delay(150)
+                throw RuntimeException("boom")
+            }
+            println("both launched")
+        }
+    } catch (e: RuntimeException) {
+        println("caught: ${e.message}")
+    }
+    println("end")
 }

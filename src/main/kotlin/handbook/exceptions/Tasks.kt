@@ -30,28 +30,55 @@ object ExceptionsTasks {
     // ═══════════════════════════ Лёгкие (1–8) ═══════════════════════════
 
     /** Л1. Корутино-безопасный runCatching: успех→success; Cancellation→throw; прочее→failure. */
-    suspend fun <T> coRunCatching(block: suspend () -> T): Result<T> = TODO()
+    suspend fun <T> coRunCatching(block: suspend () -> T): Result<T> {
+        return try {
+            Result.success(block())
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Throwable) {
+            Result.failure(e)
+        }
+    }
 
     /** Л2. Результат block или null при ошибке (Cancellation пробрасывать). */
-    suspend fun <T> successOrNull(block: suspend () -> T): T? = TODO()
+    suspend fun <T> successOrNull(block: suspend () -> T): T? = coRunCatching(block).getOrNull()
 
     /** Л3. Результат block или [default] при ошибке. */
-    suspend fun <T> getOrDefault(default: T, block: suspend () -> T): T = TODO()
+    suspend fun <T> getOrDefault(default: T, block: suspend () -> T): T = coRunCatching(block).getOrDefault(default)
 
     /** Л4. Результат block; при ошибке вернуть recover(e). */
-    suspend fun <T> recoverWith(block: suspend () -> T, recover: (Throwable) -> T): T = TODO()
+    suspend fun <T> recoverWith(block: suspend () -> T, recover: (Throwable) -> T): T =
+        coRunCatching(block).getOrElse(recover)
 
     /** Л5. true, если block бросил (не Cancellation). */
-    suspend fun isFailure(block: suspend () -> Unit): Boolean = TODO()
+    suspend fun isFailure(block: suspend () -> Unit): Boolean = coRunCatching(block).isFailure
 
     /** Л6. Применить transform к input, обернув в Result (ошибка transform → failure). */
-    suspend fun <T, R> catchingTransform(input: T, transform: suspend (T) -> R): Result<R> = TODO()
+    suspend fun <T, R> catchingTransform(input: T, transform: suspend (T) -> R): Result<R> =
+        coRunCatching { transform(input) }
 
     /** Л7. Первый блок, не бросивший исключение (по порядку); все упали → null. */
-    suspend fun firstSuccessful(blocks: List<suspend () -> Int>): Int? = TODO()
+    suspend fun firstSuccessful(blocks: List<suspend () -> Int>): Int? {
+        for (block in blocks) {
+            val result = coRunCatching(block)
+            if (result.isSuccess) {
+                return result.getOrThrow()
+            }
+        }
+        return null
+    }
 
     /** Л8. Сколько блоков бросили исключение. */
-    suspend fun countFailures(blocks: List<suspend () -> Unit>): Int = TODO()
+    suspend fun countFailures(blocks: List<suspend () -> Unit>): Int {
+        var count = 0
+        for (block in blocks) {
+            val result = coRunCatching(block)
+            if (result.isFailure) {
+                count++
+            }
+        }
+        return count
+    }
 
     // ═══════════════════════════ Средние (9–15) ═══════════════════════════
 
@@ -64,7 +91,9 @@ object ExceptionsTasks {
      *
      * Спойлер: supervisorScope + async, вокруг await заворачивай в Result (Cancellation пробрасывать).
      */
-    suspend fun <T> loadAllIndependently(loaders: List<suspend () -> T>): List<Result<T>> = TODO()
+    suspend fun <T> loadAllIndependently(loaders: List<suspend () -> T>): List<Result<T>> {
+        return supervisorScope { loaders.map { async { coRunCatching { it() } } } }.awaitAll()
+    }
 
     /**
      * С10. Выполни loaders независимо и раздели итоги на (успехи, ошибки).
@@ -74,7 +103,10 @@ object ExceptionsTasks {
      *
      * Спойлер: как С9, затем partition по success/failure.
      */
-    suspend fun <T> partitionResults(loaders: List<suspend () -> T>): Pair<List<T>, List<Throwable>> = TODO()
+    suspend fun <T> partitionResults(loaders: List<suspend () -> T>): Pair<List<T>, List<Throwable>> = supervisorScope {
+        val loadeds = loadAllIndependently(loaders)
+        loadeds.mapNotNull { it.getOrNull() } to loadeds.mapNotNull { it.exceptionOrNull() }
+    }
 
     /**
      * С11. Сумма значений только успешных loaders (упавшие игнорируются).
@@ -84,7 +116,10 @@ object ExceptionsTasks {
      *
      * Спойлер: независимо собери Result'ы, просуммируй успешные.
      */
-    suspend fun sumSuccesses(loaders: List<suspend () -> Int>): Int = TODO()
+    suspend fun sumSuccesses(loaders: List<suspend () -> Int>): Int = supervisorScope {
+        val result = loadAllIndependently(loaders)
+        result.mapNotNull { it.getOrNull() }.sum()
+    }
 
     /**
      * С12. Для каждого loader верни его результат, а при ошибке — recover(e). Порядок сохраняется.
@@ -94,7 +129,9 @@ object ExceptionsTasks {
      *
      * Спойлер: независимый запуск; на каждый await — try/catch с recover (Cancellation пробрасывать).
      */
-    suspend fun <T> recoverEach(loaders: List<suspend () -> T>, recover: (Throwable) -> T): List<T> = TODO()
+    suspend fun <T> recoverEach(loaders: List<suspend () -> T>, recover: (Throwable) -> T): List<T> = supervisorScope {
+        loadAllIndependently(loaders).map { it.getOrElse(recover) }
+    }
 
     /**
      * С13. Собери message всех УПАВШИХ loaders, в порядке loaders.
@@ -104,7 +141,9 @@ object ExceptionsTasks {
      *
      * Спойлер: независимые Result'ы → у failure возьми exceptionOrNull()?.message.
      */
-    suspend fun <T> failureMessages(loaders: List<suspend () -> T>): List<String> = TODO()
+    suspend fun <T> failureMessages(loaders: List<suspend () -> T>): List<String> = supervisorScope {
+        loadAllIndependently(loaders).mapNotNull { it.exceptionOrNull()?.message }
+    }
 
     /**
      * С14. Сколько loaders завершились успешно.
@@ -114,7 +153,9 @@ object ExceptionsTasks {
      *
      * Спойлер: независимые Result'ы → count { it.isSuccess }.
      */
-    suspend fun <T> successCount(loaders: List<suspend () -> T>): Int = TODO()
+    suspend fun <T> successCount(loaders: List<suspend () -> T>): Int = supervisorScope {
+        loadAllIndependently(loaders).count { it.isSuccess }
+    }
 
     /**
      * С15. Запусти loaders параллельно и независимо; верни результат ПЕРВОГО успешного ПО ПОРЯДКУ, иначе null.
@@ -124,7 +165,16 @@ object ExceptionsTasks {
      *
      * Спойлер: supervisor + async всех, затем по порядку ищи первый Result.success.
      */
-    suspend fun <T> firstSuccessfulResult(loaders: List<suspend () -> T>): T? = TODO()
+    suspend fun <T> firstSuccessfulResult(loaders: List<suspend () -> T>): T? = supervisorScope {
+        val deferreds = loaders.map { async { it() } }
+        for (deferred in deferreds) {
+            val res = coRunCatching { deferred.await() }
+            if (res.isSuccess) {
+                return@supervisorScope res.getOrThrow()
+            }
+        }
+        null
+    }
 
     // ═══════════════════════════ Сложные (16–20) ═══════════════════════════
 
