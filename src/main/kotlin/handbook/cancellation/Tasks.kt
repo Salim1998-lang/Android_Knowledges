@@ -47,7 +47,7 @@ object CancellationTasks {
 
     /** Л4. true, если block НЕ уложился в таймаут. */
     suspend fun isTimedOut(timeoutMs: Long, block: suspend () -> Unit): Boolean =
-        withTimeoutOrNull(timeoutMs) { block() } != null
+        withTimeoutOrNull(timeoutMs) { block() } == null
 
     /** Л5. Подождать ms (отменяемо) и вернуть value. */
     suspend fun <T> delayThenValue(ms: Long, value: T): T {
