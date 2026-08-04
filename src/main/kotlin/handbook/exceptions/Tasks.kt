@@ -1,19 +1,16 @@
 package handbook.exceptions
 
-import handbook.exceptions.solutions.ExceptionsSolutions
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -188,8 +185,9 @@ object ExceptionsTasks {
      *
      * Спойлер: coroutineScope + async + awaitAll (fail-fast встроен).
      */
-    suspend fun <T> awaitAllOrCancel(blocks: List<suspend () -> T>): List<T> =
-        TODO()
+    suspend fun <T> awaitAllOrCancel(blocks: List<suspend () -> T>): List<T> = coroutineScope {
+        blocks.map { async { it() } }.awaitAll()
+    }
 
     /**
      * СЛ17. Ретрай, возвращающий Result. До times попыток, между ними delay(delayMs).
@@ -200,8 +198,21 @@ object ExceptionsTasks {
      *
      * Спойлер: цикл попыток в try/catch; успех → success; иначе запомни ошибку и повтори; Cancellation -> throw.
      */
-    suspend fun <T> retryResult(times: Int, delayMs: Long, block: suspend () -> T): Result<T> =
-        TODO()
+    suspend fun <T> retryResult(times: Int, delayMs: Long, block: suspend () -> T): Result<T> {
+        var last: Throwable? = null
+        repeat(times) { attempt ->
+            try {
+                return Result.success(block())
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                last = e
+                if (attempt < times - 1) delay(delayMs)
+            }
+        }
+        return Result.failure(last!!)
+    }
+
 
     /**
      * СЛ18. Запусти blocks параллельно и независимо; верни первый успех ПО ПОРЯДКУ. Все упали → брось последнее.
@@ -211,8 +222,20 @@ object ExceptionsTasks {
      *
      * Спойлер: supervisor + async всех; по порядку верни первый успешный await; иначе throw последней ошибки.
      */
-    suspend fun <T> firstSuccessOf(blocks: List<suspend () -> T>): T =
-        TODO()
+    suspend fun <T> firstSuccessOf(blocks: List<suspend () -> T>): T = supervisorScope {
+        val deferreds = blocks.map { block -> async { coRunCatching { block() } } }
+        var last: Throwable? = null
+        for (d in deferreds) {
+            try {
+                return@supervisorScope d.await().getOrThrow()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                last = e
+            }
+        }
+        throw last ?: NoSuchElementException()
+    }
 
     /**
      * СЛ19. Fail-fast сумма: все blocks успели → Result.success(сумма); любой упал → Result.failure(первое исключение).
@@ -222,8 +245,9 @@ object ExceptionsTasks {
      *
      * Спойлер: runCatching { coroutineScope { async-все; awaitAll().sum() } } (fail-fast даёт первое исключение).
      */
-    suspend fun sumOrFirstError(blocks: List<suspend () -> Int>): Result<Int> =
-        TODO()
+    suspend fun sumOrFirstError(blocks: List<suspend () -> Int>): Result<Int> = coRunCatching {
+        coroutineScope { blocks.map { block -> async { block() } }.awaitAll().sum() }
+    }
 
     /**
      * СЛ20. Запусти blocks как независимых детей и верни, сколько из них выбросили НЕОБРАБОТАННОЕ исключение.
@@ -233,8 +257,14 @@ object ExceptionsTasks {
      *
      * Спойлер: scope с SupervisorJob + CoroutineExceptionHandler(считает ошибки); launch каждого; дождаться всех.
      */
-    suspend fun countUncaught(blocks: List<suspend () -> Unit>): Int =
-        TODO()
+    suspend fun countUncaught(blocks: List<suspend () -> Unit>): Int {
+        val count = AtomicInteger(0)
+        val cen = CoroutineExceptionHandler { _, _ -> count.incrementAndGet() }
+        val scope = CoroutineScope(SupervisorJob() + cen)
+        blocks.forEach { block -> scope.launch { block() } }
+        scope.coroutineContext[Job]!!.children.forEach { it.join() }
+        return count.get()
+    }
 
     // ═══════════════════════════ Дополнительные (21) ═══════════════════════════
 
@@ -253,5 +283,13 @@ object ExceptionsTasks {
     suspend fun collectSuppressed(
         work: suspend () -> Unit,
         close: () -> Unit,
-    ): Pair<String?, List<String?>> = TODO()
+    ): Pair<String?, List<String?>> {
+        val resource = AutoCloseable { close() }
+        return try {
+            resource.use { work() }
+            null to emptyList()
+        } catch (e: Throwable) {
+            e.message to e.suppressed.map { it.message }
+        }
+    }
 }
