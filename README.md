@@ -1,8 +1,8 @@
 # Kotlin Coroutines Handbook 🧵
 
-Учебный проект для **глубокого изучения корутин** Kotlin. 8 тем, в каждой — подробная теория и
+Учебный проект для **глубокого изучения корутин** Kotlin. 9 тем, в каждой — подробная теория и
 **~20 задач** трёх уровней сложности (лёгкие + средние + сложные) + тесты, которые проверяют
-твоё решение. Всего **169 задач** с эталонными решениями.
+твоё решение. Всего **189 задач** с эталонными решениями.
 
 > 📚 Репозиторий растёт в **открытую базу знаний по Android**. Помимо корутин здесь появляются и
 > другие темы — начиная с [**мобильного систем-дизайна**](docs/system-design/README.md).
@@ -59,6 +59,7 @@ src/test/kotlin/handbook/
 | 6 | Каналы | `handbook.channels` | `Channel`, `produce`, pipelines, fan-in / fan-out |
 | 7 | Разделяемое состояние | `handbook.concurrency` | гонки, `Mutex`, атомики/CAS, замыкание на поток, actor, lock striping |
 | 8 | Диспетчеры и контекст | `handbook.dispatchers` | `Dispatchers` (IO/Default/Main), `CoroutineContext`, `withContext`, наследование, `limitedParallelism`, `CoroutineName` |
+| 9 | Тестирование корутин | `handbook.testing` | `runTest`, виртуальное время, `currentTime`/`advanceTimeBy`, `TestDispatcher` (Standard/Unconfined), `setMain`, `backgroundScope` |
 
 ## 🏗️ База знаний: Систем-дизайн
 

@@ -14,6 +14,7 @@ fun main() {
         "6. channels      — Channel, produce, pipelines, fan-in/fan-out",
         "7. concurrency   — разделяемое состояние, Mutex, атомики, замыкание, actor",
         "8. dispatchers   — Dispatchers, CoroutineContext, withContext, limitedParallelism",
+        "9. testing       — runTest, виртуальное время, TestDispatcher, setMain, backgroundScope",
     )
 
     println("=".repeat(60))
