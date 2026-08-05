@@ -4,10 +4,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.currentTime
 import kotlinx.coroutines.test.runTest
 import java.util.concurrent.atomic.AtomicInteger
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 /**
@@ -136,5 +140,27 @@ class FlowTest {
         val t0 = currentTime
         assertEquals(listOf(1, 2), FlowTasks.takeN(source, 2).toList())
         assertEquals(0, currentTime - t0, "take(2) обрывает источник до delay(1000) третьей эмиссии")
+    }
+
+    // ── Мост с колбэк-API ──
+
+    @Test fun `СЛ21 emitterFlow мостит колбэк и снимает подписку`() = runTest {
+        val emitter = IntEmitter()
+        val collected = mutableListOf<Int>()
+        // Unconfined-диспетчер: сборщик подписывается сразу и получает значения по мере emit.
+        val job = launch(UnconfinedTestDispatcher(testScheduler)) {
+            FlowTasks.emitterFlow(emitter).collect { collected.add(it) }
+        }
+        assertTrue(emitter.isSubscribed(), "collect должен подписаться на источник")
+        emitter.emit(1); emitter.emit(2); emitter.emit(3)
+        emitter.complete()
+        job.join()
+        assertEquals(listOf(1, 2, 3), collected)
+        assertFalse(emitter.isSubscribed(), "awaitClose должен снять подписку по завершении")
+    }
+
+    @Test fun `СЛ22 mergeConcurrently сливает все источники`() = runTest {
+        val merged = FlowTasks.mergeConcurrently(listOf(flowOf(1, 2, 3), flowOf(4, 5, 6))).toList()
+        assertEquals(setOf(1, 2, 3, 4, 5, 6), merged.toSet())
     }
 }

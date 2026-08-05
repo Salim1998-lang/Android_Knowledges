@@ -1,14 +1,43 @@
 package handbook.flow
 
 import kotlinx.coroutines.flow.Flow
+
+/** Отписка от колбэк-источника (как ListenerRegistration/Disposable). */
+fun interface Subscription {
+    fun cancel()
+}
+
 /**
- * Тема 5 «Flow» — 20 задач.
+ * Учебный колбэк-API (имитация слушателя): значения приходят «извне» через [emit], конец — [complete].
+ * Используется в задаче про `callbackFlow` (СЛ21). После отписки [isSubscribed] == false — так тест
+ * проверяет, что `awaitClose { }` реально освободил ресурс.
+ */
+class IntEmitter {
+    private var onEach: ((Int) -> Unit)? = null
+    private var onComplete: (() -> Unit)? = null
+
+    fun subscribe(onEach: (Int) -> Unit, onComplete: () -> Unit): Subscription {
+        this.onEach = onEach
+        this.onComplete = onComplete
+        return Subscription {
+            this.onEach = null
+            this.onComplete = null
+        }
+    }
+
+    fun emit(value: Int) { onEach?.invoke(value) }
+    fun complete() { onComplete?.invoke() }
+    fun isSubscribed(): Boolean = onEach != null
+}
+
+/**
+ * Тема 5 «Flow» — 22 задачи (20 базовых + 2 на мост с колбэк-API).
  * Реализуй функции (замени `TODO()`). Проверка: `./gradlew test --tests "handbook.flow.*"`.
  * Эталон — в [handbook.flow.solutions.FlowSolutions].
  *
  * Подсказка по импортам: `flow`, `flowOf`, `asFlow`, `map`, `filter`, `take`, `drop`, `count`,
  * `toList`, `scan`, `runningReduce`, `transform`, `distinctUntilChanged`, `zip`, `withIndex`,
- * `fold`, `catch`, `retry`, `flatMapConcat`.
+ * `fold`, `catch`, `retry`, `flatMapConcat`, `callbackFlow`, `channelFlow`, `awaitClose`.
  */
 object FlowTasks {
 
@@ -162,5 +191,32 @@ object FlowTasks {
      * Спойлер: chunked(size), затем map { it.sum() } — или буфер во flow { }.
      */
     fun batchSums(source: Flow<Int>, size: Int): Flow<Int> =
+        TODO()
+
+    // ═══════════════════════════ Мост с колбэк-API (21–22) ═══════════════════════════
+
+    /**
+     * СЛ21. Оберни колбэк-источник [IntEmitter] в холодный Flow через `callbackFlow`.
+     * Требования (проверяет тест):
+     *  • на каждый emitter.emit(v) — элемент v в потоке (используй trySend);
+     *  • emitter.complete() завершает поток (close);
+     *  • при отмене/завершении сбора подписка снимается — `awaitClose { subscription.cancel() }`
+     *    (после сбора emitter.isSubscribed() == false).
+     *
+     * Спойлер: callbackFlow { val sub = emitter.subscribe(onEach = { trySend(it) }, onComplete = { close() }); awaitClose { sub.cancel() } }.
+     */
+    fun emitterFlow(emitter: IntEmitter): Flow<Int> =
+        TODO()
+
+    /**
+     * СЛ22. Слей несколько Flow в один КОНКУРЕНТНО через `channelFlow` (обычный `flow { }` не умеет
+     *       эмитить из нескольких корутин — нужен channelFlow + send).
+     * Требования (проверяет тест):
+     *  • в выходе присутствуют все элементы всех источников;
+     *  • источники собираются параллельно (каждый в своём launch).
+     *
+     * Спойлер: channelFlow { sources.forEach { src -> launch { src.collect { send(it) } } } }.
+     */
+    fun mergeConcurrently(sources: List<Flow<Int>>): Flow<Int> =
         TODO()
 }

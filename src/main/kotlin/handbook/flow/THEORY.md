@@ -148,12 +148,50 @@ merge(a, b)                        // слить два потока
 - `flowOn` — где готовить; `buffer/conflate/collectLatest` — что делать при перегрузке;
   `catch/retry/onCompletion` — что при ошибках.
 
+## 13. Мост с колбэк-API: `callbackFlow` / `channelFlow`
+
+Обычный `flow { }` эмитит из **одной** корутины и не годится, когда значения приходят «извне» —
+из колбэка слушателя (клик, локация, сокет) или из **нескольких** корутин сразу. Для этого есть
+строители на канале.
+
+**`callbackFlow`** — обернуть колбэк-API в холодный `Flow`. Три обязательные части:
+
+```kotlin
+fun locationUpdates(client: LocationClient): Flow<Location> = callbackFlow {
+    val callback = object : LocationCallback {
+        override fun onLocation(loc: Location) { trySend(loc) }   // 1) колбэк → поток
+        override fun onDone() { close() }                         // 2) конец → close()
+    }
+    client.register(callback)
+    awaitClose { client.unregister(callback) }                   // 3) очистка при отмене сбора
+}
+```
+
+- `trySend(x)` — неблокирующая отправка из колбэка (сам колбэк не `suspend`);
+- `close()` — завершить поток;
+- `awaitClose { }` — **обязателен**: приостанавливает строитель, пока идёт сбор, и выполняет
+  очистку (отписку), когда сбор отменён/завершён. Без него — утечка слушателя (и падение в рантайме).
+
+**`channelFlow`** — когда эмитить нужно из **нескольких** корутин конкурентно (чего `flow { }`
+запрещает). Внутри доступны `launch` и `send`:
+
+```kotlin
+fun merge(a: Flow<Int>, b: Flow<Int>): Flow<Int> = channelFlow {
+    launch { a.collect { send(it) } }
+    launch { b.collect { send(it) } }
+}   // оба источника собираются параллельно, шлют в один поток
+```
+
+> 🧠 **Когда что.** Один источник, эмиссия из одного места → обычный `flow { }`. Колбэк/слушатель
+> извне → `callbackFlow` + `awaitClose`. Несколько конкурентных продюсеров → `channelFlow`.
+
 ---
 
-## Задачи (`Tasks.kt`) — 20 штук
+## Задачи (`Tasks.kt`) — 22 штуки
 
 **Лёгкие (1–8):** `flow`/`flowOf`/`asFlow`, `map`/`filter`/`take`/`drop`/`toList`/`count`.
 **Средние (9–15):** `scan`/`runningReduce`, `transform`, `distinctUntilChanged`, `zip`, `onEach`.
 **Сложные (16–20):** кастомный `chunked`, `catch`+фолбэк, `retry`, `flatMapConcat`, дебаунс-подобное.
+**Мост с колбэк-API (21–22):** `callbackFlow` + `awaitClose`, `channelFlow` с конкурентными продюсерами.
 
 Эталон — в [`solutions/Solutions.kt`](solutions/Solutions.kt).

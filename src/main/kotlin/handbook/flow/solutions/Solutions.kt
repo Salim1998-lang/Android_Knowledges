@@ -1,8 +1,13 @@
 package handbook.flow.solutions
 
+import handbook.flow.IntEmitter
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -19,6 +24,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.flow.zip
+import kotlinx.coroutines.launch
 
 /** Эталонные решения темы 5. Подсмотри, если застрял с [handbook.flow.FlowTasks]. */
 object FlowSolutions {
@@ -77,4 +83,16 @@ object FlowSolutions {
         source.flatMapConcat { n -> flow { repeat(n) { emit(n) } } }
 
     fun batchSums(source: Flow<Int>, size: Int): Flow<Int> = chunked(source, size).map { it.sum() }
+
+    fun emitterFlow(emitter: IntEmitter): Flow<Int> = callbackFlow {
+        val subscription = emitter.subscribe(
+            onEach = { value -> trySend(value) },
+            onComplete = { close() },
+        )
+        awaitClose { subscription.cancel() }
+    }
+
+    fun mergeConcurrently(sources: List<Flow<Int>>): Flow<Int> = channelFlow {
+        for (src in sources) launch { src.collect { send(it) } }
+    }
 }
