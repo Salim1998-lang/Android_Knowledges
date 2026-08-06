@@ -1,8 +1,11 @@
 # Kotlin Coroutines Handbook 🧵
 
 Учебный проект для **глубокого изучения корутин** Kotlin. 9 тем, в каждой — подробная теория и
+## 🧵 Корутины Kotlin
+
+Раздел для **глубокого изучения корутин** Kotlin. 10 тем, в каждой — подробная теория и
 **~20 задач** трёх уровней сложности (лёгкие + средние + сложные) + тесты, которые проверяют
-твоё решение. Всего **189 задач** с эталонными решениями.
+твоё решение. Всего **209 задач** с эталонными решениями.
 
 > 📚 Репозиторий растёт в **открытую базу знаний по Android**. Помимо корутин здесь появляются и
 > другие темы — начиная с [**мобильного систем-дизайна**](docs/system-design/README.md).
@@ -55,11 +58,12 @@ src/test/kotlin/handbook/
 | 2 | Структурная конкурентность | `handbook.structured` | `coroutineScope`, `async`/`await`, параллельная декомпозиция |
 | 3 | Отмена и таймауты | `handbook.cancellation` | кооперативная отмена, `isActive`, `withTimeout`, `NonCancellable` |
 | 4 | Обработка исключений | `handbook.exceptions` | `try/catch`, `SupervisorJob`, `CoroutineExceptionHandler` |
-| 5 | Flow | `handbook.flow` | холодные потоки, операторы, `map`/`filter`/`flatMap`, backpressure |
-| 6 | Каналы | `handbook.channels` | `Channel`, `produce`, pipelines, fan-in / fan-out |
-| 7 | Разделяемое состояние | `handbook.concurrency` | гонки, `Mutex`, атомики/CAS, замыкание на поток, actor, lock striping |
-| 8 | Диспетчеры и контекст | `handbook.dispatchers` | `Dispatchers` (IO/Default/Main), `CoroutineContext`, `withContext`, наследование, `limitedParallelism`, `CoroutineName` |
-| 9 | Тестирование корутин | `handbook.testing` | `runTest`, виртуальное время, `currentTime`/`advanceTimeBy`, `TestDispatcher` (Standard/Unconfined), `setMain`, `backgroundScope` |
+| 5 | Диспетчеры и контекст | `handbook.dispatchers` | `Dispatchers` (IO/Default/Main), `CoroutineContext`, `withContext`, наследование, `limitedParallelism`, `CoroutineName` |
+| 6 | Flow | `handbook.flow` | холодные потоки, операторы, `map`/`filter`/`flatMap`, backpressure |
+| 7 | Горячие потоки | `handbook.hotflows` | `StateFlow`/`SharedFlow`, `replay`/`onBufferOverflow`, `stateIn`/`shareIn`, `SharingStarted`, конфляция vs холодный `Flow` |
+| 8 | Каналы | `handbook.channels` | `Channel`, `produce`, pipelines, fan-in / fan-out |
+| 9 | Разделяемое состояние | `handbook.concurrency` | гонки, `Mutex`, атомики/CAS, замыкание на поток, actor, lock striping |
+| 10 | Тестирование корутин | `handbook.testing` | `runTest`, виртуальное время, `currentTime`/`advanceTimeBy`, `TestDispatcher` (Standard/Unconfined), `setMain`, `backgroundScope` |
 
 ## 🏗️ База знаний: Систем-дизайн
 

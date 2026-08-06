@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Эталонные решения темы 9. Подсмотри, если застрял с [handbook.testing.TestingTasks]. */
+/** Эталонные решения темы 10. Подсмотри, если застрял с [handbook.testing.TestingTasks]. */
 object TestingSolutions {
 
     // ── Лёгкие ──

@@ -10,7 +10,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 
-/** Эталонные решения темы 6. Подсмотри, если застрял с [handbook.channels.ChannelsTasks]. */
+/** Эталонные решения темы 8. Подсмотри, если застрял с [handbook.channels.ChannelsTasks]. */
 object ChannelsSolutions {
 
     fun CoroutineScope.produceNumbers(n: Int): ReceiveChannel<Int> = produce { for (i in 1..n) send(i) }

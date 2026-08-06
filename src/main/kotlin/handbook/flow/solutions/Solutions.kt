@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.flow.zip
 import kotlinx.coroutines.launch
 
-/** Эталонные решения темы 5. Подсмотри, если застрял с [handbook.flow.FlowTasks]. */
+/** Эталонные решения темы 6. Подсмотри, если застрял с [handbook.flow.FlowTasks]. */
 object FlowSolutions {
 
     fun rangeFlow(n: Int): Flow<Int> = flow { for (i in 1..n) emit(i) }

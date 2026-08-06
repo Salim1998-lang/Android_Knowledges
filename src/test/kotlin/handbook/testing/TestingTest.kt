@@ -14,7 +14,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 /**
- * Тесты темы 9. Задачи — расширения TestScope, поэтому вызываются `with(TestingTasks) { ... }`
+ * Тесты темы 10. Задачи — расширения TestScope, поэтому вызываются `with(TestingTasks) { ... }`
  * внутри `runTest`. Виртуальное время `runTest` делает задержки мгновенными и детерминированными.
  * Для СЛ16 (`runOnMain`) подменяем Dispatchers.Main тестовым диспетчером (setMain/resetMain).
  */
@@ -26,19 +26,26 @@ class TestingTest {
     // ── Лёгкие ──
 
     @Test fun `Л1 elapsed`() = runTest {
-        with(TestingTasks) { assertEquals(500, elapsed { delay(500) }) }
+        with(TestingTasks) {
+            assertEquals(500, elapsed { delay(500) })
+            assertEquals(250, elapsed { delay(250) })  // другой интервал — не хардкод
+            assertEquals(0, elapsed { })               // нет задержки → 0
+        }
     }
 
+    // ВНИМАНИЕ: sequential/concurrentDelays/advanceAndTime возвращают АБСОЛЮТНЫЙ currentTime,
+    // а часы в одном runTest общие — поэтому один вызов на тест (нетривиальный вход бьёт хардкод).
+
     @Test fun `Л2 sequentialDelays складываются`() = runTest {
-        with(TestingTasks) { assertEquals(300, sequentialDelays(100, 200)) }
+        with(TestingTasks) { assertEquals(75, sequentialDelays(25, 50)) } // не круглое, не 300
     }
 
     @Test fun `Л3 concurrentDelays это максимум`() = runTest {
-        with(TestingTasks) { assertEquals(200, concurrentDelays(100, 200)) }
+        with(TestingTasks) { assertEquals(300, concurrentDelays(300, 100)) } // max, а не порядок/сумма
     }
 
     @Test fun `Л4 advanceAndTime`() = runTest {
-        with(TestingTasks) { assertEquals(1000, advanceAndTime(1000)) }
+        with(TestingTasks) { assertEquals(42, advanceAndTime(42)) } // не круглое значение
     }
 
     @Test fun `Л5 pendingUntilIdle`() = runTest {
@@ -54,7 +61,10 @@ class TestingTest {
     }
 
     @Test fun `Л8 delayedValue`() = runTest {
-        with(TestingTasks) { assertEquals(7, delayedValue(1000, 7)) }
+        with(TestingTasks) {
+            assertEquals(7, delayedValue(1000, 7))
+            assertEquals(-3, delayedValue(50, -3)) // другое значение — возвращает именно его
+        }
     }
 
     // ── Средние ──
@@ -94,16 +104,25 @@ class TestingTest {
     }
 
     @Test fun `СЛ17 retryWithBackoff`() = runTest {
-        with(TestingTasks) { assertEquals(4 to 700L, retryWithBackoff(failTimes = 3)) }
+        with(TestingTasks) {
+            assertEquals(4 to 700L, retryWithBackoff(failTimes = 3))   // 100+200+400
+            assertEquals(1 to 0L, retryWithBackoff(failTimes = 0))     // успех с первой попытки, без задержек
+            assertEquals(3 to 300L, retryWithBackoff(failTimes = 2))   // 100+200
+        }
     }
 
     @Test fun `СЛ18 backgroundTicker не виснет`() = runTest {
-        with(TestingTasks) { assertEquals(listOf(1, 2, 3, 4, 5), backgroundTicker(period = 100, steps = 5)) }
+        with(TestingTasks) {
+            assertEquals(listOf(1, 2, 3, 4, 5), backgroundTicker(period = 100, steps = 5))
+            assertEquals(listOf(1, 2, 3), backgroundTicker(period = 50, steps = 3)) // другие период/шаги
+        }
     }
 
     @Test fun `СЛ19 parallelAwaitAll`() = runTest {
         with(TestingTasks) {
             assertEquals(listOf(100L, 200L, 300L) to 300L, parallelAwaitAll(100, 200, 300))
+            // время == max, результаты сохраняют порядок аргументов даже при разных задержках
+            assertEquals(listOf(300L, 50L, 150L) to 300L, parallelAwaitAll(300, 50, 150))
         }
     }
 

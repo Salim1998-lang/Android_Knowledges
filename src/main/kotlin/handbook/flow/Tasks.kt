@@ -31,7 +31,7 @@ class IntEmitter {
 }
 
 /**
- * Тема 5 «Flow» — 22 задачи (20 базовых + 2 на мост с колбэк-API).
+ * Тема 6 «Flow» — 22 задачи (20 базовых + 2 на мост с колбэк-API).
  * Реализуй функции (замени `TODO()`). Проверка: `./gradlew test --tests "handbook.flow.*"`.
  * Эталон — в [handbook.flow.solutions.FlowSolutions].
  *

@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 
 /**
- * Тема 6 «Каналы» — 20 задач.
+ * Тема 8 «Каналы» — 20 задач.
  * Реализуй функции (замени `TODO()`). Проверка: `./gradlew test --tests "handbook.channels.*"`.
  * Эталон — в [handbook.channels.solutions.ChannelsSolutions].
  *

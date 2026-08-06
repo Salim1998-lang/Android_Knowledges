@@ -7,7 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class IntBox(var value: Int = 0)
 
 /**
- * Тема 7 «Разделяемое изменяемое состояние (Mutex)» — 20 задач.
+ * Тема 9 «Разделяемое изменяемое состояние (Mutex)» — 20 задач.
  * Реализуй функции (замени `TODO()`). Проверка: `./gradlew test --tests "handbook.concurrency.*"`.
  * Эталон — в [handbook.concurrency.solutions.ConcurrencySolutions].
  *

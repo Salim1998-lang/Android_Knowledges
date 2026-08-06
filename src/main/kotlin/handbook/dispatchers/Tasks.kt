@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Тема 8 «Диспетчеры и CoroutineContext» — 20 задач.
+ * Тема 5 «Диспетчеры и CoroutineContext» — 20 задач.
  * Реализуй функции (замени `TODO()`). Проверка: `./gradlew test --tests "handbook.dispatchers.*"`.
  * Эталон — в [handbook.dispatchers.solutions.DispatchersSolutions].
  *

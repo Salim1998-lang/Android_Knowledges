@@ -14,7 +14,7 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
-/** Эталонные решения темы 8. Подсмотри, если застрял с [handbook.dispatchers.DispatchersTasks]. */
+/** Эталонные решения темы 5. Подсмотри, если застрял с [handbook.dispatchers.DispatchersTasks]. */
 object DispatchersSolutions {
 
     // ── Лёгкие ──

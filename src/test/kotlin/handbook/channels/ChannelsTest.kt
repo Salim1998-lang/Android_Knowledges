@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 /**
- * Тесты темы 6. Функциональные тесты проверяют содержимое каналов. Группа «корутинные свойства»
+ * Тесты темы 8. Функциональные тесты проверяют содержимое каналов. Группа «корутинные свойства»
  * проверяет то, что делает каналы корутинным примитивом: BACKPRESSURE (rendezvous-канал двигает
  * элементы по одному, продюсер ждёт консьюмера — через виртуальное время) и РАННЮЮ ОТМЕНУ upstream
  * (`takeChannel` отменяет источник, не дожидаясь остальных элементов).
@@ -24,11 +24,18 @@ class ChannelsTest {
     }
 
     @Test fun `Л3 produceRange`() = runTest {
-        with(ChannelsTasks) { assertEquals(listOf(3, 4, 5), drain(produceRange(3, 5))) }
+        with(ChannelsTasks) {
+            assertEquals(listOf(3, 4, 5), drain(produceRange(3, 5)))
+            assertEquals(listOf(7), drain(produceRange(7, 7)))                 // единичный диапазон
+            assertEquals(emptyList<Int>(), drain(produceRange(5, 3)))          // from > to → пусто
+        }
     }
 
     @Test fun `Л4 produceFrom`() = runTest {
-        with(ChannelsTasks) { assertEquals(listOf("a", "b"), drain(produceFrom(listOf("a", "b")))) }
+        with(ChannelsTasks) {
+            assertEquals(listOf("a", "b"), drain(produceFrom(listOf("a", "b"))))
+            assertEquals(emptyList<String>(), drain(produceFrom(emptyList<String>())))
+        }
     }
 
     @Test fun `Л5 firstTwo`() = runTest {
@@ -40,15 +47,24 @@ class ChannelsTest {
     }
 
     @Test fun `Л6 sumChannel`() = runTest {
-        with(ChannelsTasks) { assertEquals(15, sumChannel(produceNumbers(5))) }
+        with(ChannelsTasks) {
+            assertEquals(15, sumChannel(produceNumbers(5)))
+            assertEquals(0, sumChannel(produceRange(1, 0)))   // пустой канал → 0
+        }
     }
 
     @Test fun `Л7 countChannel`() = runTest {
-        with(ChannelsTasks) { assertEquals(5, countChannel(produceNumbers(5))) }
+        with(ChannelsTasks) {
+            assertEquals(5, countChannel(produceNumbers(5)))
+            assertEquals(0, countChannel(produceRange(1, 0))) // пустой канал → 0
+        }
     }
 
     @Test fun `Л8 produceEvens`() = runTest {
-        with(ChannelsTasks) { assertEquals(listOf(2, 4, 6, 8), drain(produceEvens(4))) }
+        with(ChannelsTasks) {
+            assertEquals(listOf(2, 4, 6, 8), drain(produceEvens(4)))
+            assertEquals(listOf(2), drain(produceEvens(1)))   // граница снизу
+        }
     }
 
     // ── Средние ──
@@ -58,11 +74,17 @@ class ChannelsTest {
     }
 
     @Test fun `С10 mapChannel`() = runTest {
-        with(ChannelsTasks) { assertEquals(listOf(10, 20, 30), drain(mapChannel(produceNumbers(3)) { it * 10 })) }
+        with(ChannelsTasks) {
+            assertEquals(listOf(10, 20, 30), drain(mapChannel(produceNumbers(3)) { it * 10 }))
+            assertEquals(listOf("1!", "2!"), drain(mapChannel(produceNumbers(2)) { "$it!" })) // смена типа, не хардкод
+        }
     }
 
     @Test fun `С11 filterChannel`() = runTest {
-        with(ChannelsTasks) { assertEquals(listOf(2, 4, 6), drain(filterChannel(produceNumbers(6)) { it % 2 == 0 })) }
+        with(ChannelsTasks) {
+            assertEquals(listOf(2, 4, 6), drain(filterChannel(produceNumbers(6)) { it % 2 == 0 }))
+            assertEquals(emptyList<Int>(), drain(filterChannel(produceNumbers(5)) { it > 100 })) // ни один не прошёл
+        }
     }
 
     @Test fun `С12 merge fan-in`() = runTest {
@@ -88,13 +110,22 @@ class ChannelsTest {
         with(ChannelsTasks) {
             val zipped = drain(zipChannels(produceNumbers(3), produceFrom(listOf("a", "b", "c"))) { n, s -> "$n$s" })
             assertEquals(listOf("1a", "2b", "3c"), zipped)
+            // длина = min: короткий второй канал обрывает zip
+            val longA = produceNumbers(5)
+            val shorter = drain(zipChannels(longA, produceFrom(listOf("x", "y"))) { n, s -> "$n$s" })
+            assertEquals(listOf("1x", "2y"), shorter)
+            longA.cancel() // zip не отменяет входы — прибираем недоеденный источник, иначе продюсер повиснет
         }
     }
 
     // ── Сложные ──
 
     @Test fun `СЛ16 fanOutSum`() = runTest {
-        with(ChannelsTasks) { assertEquals((1..100).sum(), fanOutSum(produceNumbers(100), workers = 4)) }
+        with(ChannelsTasks) {
+            assertEquals((1..100).sum(), fanOutSum(produceNumbers(100), workers = 4))
+            assertEquals((1..100).sum(), fanOutSum(produceNumbers(100), workers = 1)) // один воркер
+            assertEquals((1..50).sum(), fanOutSum(produceNumbers(50), workers = 8))   // воркеров больше, чем удобно
+        }
     }
 
     @Test fun `СЛ17 pipelineSquaredPlusOne`() = runTest {
@@ -105,6 +136,11 @@ class ChannelsTest {
         with(ChannelsTasks) {
             val merged = drain(fanInMerge(listOf(produceRange(1, 3), produceRange(4, 6), produceRange(7, 9))))
             assertEquals((1..9).toSet(), merged.toSet())
+            assertEquals(9, merged.size, "ничего не потеряно и не продублировано")
+            // единственный источник
+            assertEquals(listOf(1, 2), drain(fanInMerge(listOf(produceRange(1, 2)))).sorted())
+            // пустой список источников → пусто (и не виснет)
+            assertEquals(emptyList<Int>(), drain(fanInMerge<Int>(emptyList())))
         }
     }
 
@@ -112,16 +148,25 @@ class ChannelsTest {
         with(ChannelsTasks) {
             val partials = distributeAndSum(produceNumbers(100), workers = 4)
             assertEquals(4, partials.size)
-            assertEquals((1..100).sum(), partials.sum())
+            assertEquals((1..100).sum(), partials.sum(), "каждый элемент учтён ровно раз")
+            // один воркер получает всё
+            val single = distributeAndSum(produceNumbers(10), workers = 1)
+            assertEquals(listOf((1..10).sum()), single)
         }
     }
 
     @Test fun `СЛ20 selectFirst`() = runTest {
-        val a = Channel<String>(1)
-        val b = Channel<String>(1)
-        a.send("from-a")
-        assertEquals("from-a", ChannelsTasks.selectFirst(a, b))
-        a.close(); b.close()
+        with(ChannelsTasks) {
+            val a1 = Channel<String>(1); val b1 = Channel<String>(1)
+            a1.send("from-a")
+            assertEquals("from-a", selectFirst(a1, b1)) // готов только a
+            a1.close(); b1.close()
+
+            val a2 = Channel<String>(1); val b2 = Channel<String>(1)
+            b2.send("from-b")
+            assertEquals("from-b", selectFirst(a2, b2)) // готов только b
+            a2.close(); b2.close()
+        }
     }
 
     // ── Корутинные свойства каналов ──

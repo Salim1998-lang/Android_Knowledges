@@ -14,7 +14,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-/** Эталонные решения темы 7. Подсмотри, если застрял с [handbook.concurrency.ConcurrencyTasks]. */
+/** Эталонные решения темы 9. Подсмотри, если застрял с [handbook.concurrency.ConcurrencyTasks]. */
 object ConcurrencySolutions {
 
     // ── Лёгкие ──

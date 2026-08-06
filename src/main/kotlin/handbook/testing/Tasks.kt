@@ -3,7 +3,7 @@ package handbook.testing
 import kotlinx.coroutines.test.TestScope
 
 /**
- * Тема 9 «Тестирование корутин» — 20 задач.
+ * Тема 10 «Тестирование корутин» — 20 задач.
  * Реализуй функции (замени `TODO()`). Проверка: `./gradlew test --tests "handbook.testing.*"`.
  * Эталон — в [handbook.testing.solutions.TestingSolutions].
  *
