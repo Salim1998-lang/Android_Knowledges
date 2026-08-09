@@ -1,7 +1,17 @@
 package handbook.dispatchers
 
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
+import kotlin.random.Random
 
 /**
  * Тема 5 «Диспетчеры и CoroutineContext» — 20 задач.
@@ -17,45 +27,39 @@ object DispatchersTasks {
     // ═══════════════════════════ Лёгкие (1–8) ═══════════════════════════
 
     /** Л1. Верни имя текущей корутины (или null). Спойлер: coroutineContext[CoroutineName]?.name. */
-    suspend fun currentName(): String? =
-        TODO()
+    suspend fun currentName(): String? = coroutineContext[CoroutineName]?.name
 
     /** Л2. Выполни block на Dispatchers.IO и верни результат. Спойлер: withContext(Dispatchers.IO){ block() }. */
-    suspend fun <T> onIO(block: suspend () -> T): T =
-        TODO()
+    suspend fun <T> onIO(block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }
 
     /** Л3. Выполни block на Dispatchers.Default и верни результат. Спойлер: withContext(Default){ block() }. */
-    suspend fun <T> onDefault(block: suspend () -> T): T =
-        TODO()
+    suspend fun <T> onDefault(block: suspend () -> T): T = withContext(Dispatchers.Default) { block() }
 
     /**
      * Л4. Переключись на `dispatcher` и проверь, что текущий перехватчик — это он.
      * Спойлер: withContext(dispatcher){ coroutineContext[ContinuationInterceptor] === dispatcher }.
      */
     suspend fun runsOn(dispatcher: CoroutineDispatcher): Boolean =
-        TODO()
+        withContext(dispatcher) { kotlin.coroutines.coroutineContext[ContinuationInterceptor] === dispatcher }
 
     /** Л5. Собери контекст «IO + имя name». Спойлер: Dispatchers.IO + CoroutineName(name). */
-    fun ioWithName(name: String): CoroutineContext =
-        TODO()
+    fun ioWithName(name: String): CoroutineContext = Dispatchers.IO + CoroutineName("$name")
 
     /**
      * Л6. Выполни блок под именем name и верни это имя изнутри.
      * Спойлер: withContext(CoroutineName(name)){ coroutineContext[CoroutineName]?.name }.
      */
     suspend fun nameUnder(name: String): String? =
-        TODO()
+        withContext(CoroutineName("$name")) { coroutineContext[CoroutineName]?.name }
 
     /**
      * Л7. Объедини два контекста; при конфликте ключей должен победить ПРАВЫЙ.
      * Спойлер: a + b (правый операнд переопределяет левый для того же ключа).
      */
-    fun rightWins(a: CoroutineContext, b: CoroutineContext): CoroutineContext =
-        TODO()
+    fun rightWins(a: CoroutineContext, b: CoroutineContext): CoroutineContext = a + b
 
     /** Л8. Верни контекст без элемента CoroutineName. Спойлер: ctx.minusKey(CoroutineName). */
-    fun withoutName(ctx: CoroutineContext): CoroutineContext =
-        TODO()
+    fun withoutName(ctx: CoroutineContext): CoroutineContext = ctx.minusKey(CoroutineName)
 
     // ═══════════════════════════ Средние (9–15) ═══════════════════════════
 
@@ -66,7 +70,15 @@ object DispatchersTasks {
      * Спойлер: withContext(CoroutineName(parent)){ var r; coroutineScope{ launch { r = coroutineContext[CoroutineName]?.name } }; r }.
      */
     suspend fun childInheritsName(parent: String): String? =
-        TODO()
+        withContext(CoroutineName("$parent")) {
+            var child: String? = null
+            coroutineScope {
+                launch {
+                    child = coroutineContext[CoroutineName]?.name
+                }
+            }
+            child
+        }
 
     /**
      * С10. Под именем parent запусти ребёнка с именем child (переопредели) и верни имя, которое он видит.
@@ -74,8 +86,15 @@ object DispatchersTasks {
      *
      * Спойлер: ... launch(CoroutineName(child)) { r = coroutineContext[CoroutineName]?.name } ...
      */
-    suspend fun childOverridesName(parent: String, child: String): String? =
-        TODO()
+    suspend fun childOverridesName(parent: String, child: String): String? = withContext(CoroutineName(parent)) {
+        var child1: String? = null
+        coroutineScope {
+            launch(CoroutineName(child)) {
+                child1 = coroutineContext[CoroutineName]?.name
+            }
+        }
+        child1
+    }
 
     /**
      * С11. Находясь на IO, переключись внутрь на Default. Верни пару (былиНаIO, внутриНаDefault).
@@ -83,8 +102,13 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(IO){ val a = interceptor===IO; val b = withContext(Default){ interceptor===Default }; a to b }.
      */
-    suspend fun switchIOtoDefault(): Pair<Boolean, Boolean> =
-        TODO()
+    suspend fun switchIOtoDefault(): Pair<Boolean, Boolean> = withContext(IO) {
+        val a = ContinuationInterceptor === IO.key
+        val b = withContext(Dispatchers.Default) {
+            ContinuationInterceptor === Dispatchers.Default.key
+        }
+        a to b
+    }
 
     /**
      * С12. Запусти `tasks` корутин на Default.limitedParallelism(limit) и верни МАКСИМАЛЬНОЕ число
@@ -96,8 +120,18 @@ object DispatchersTasks {
      * Спойлер: val d = Dispatchers.Default.limitedParallelism(limit); active/max — AtomicInteger;
      *          launch { val c=active.incrementAndGet(); max.updateAndGet{ maxOf(it,c) }; busySpin(15); active.decrementAndGet() }.
      */
-    suspend fun observedConcurrency(limit: Int, tasks: Int): Int =
-        TODO()
+    suspend fun observedConcurrency(limit: Int, tasks: Int): Int {
+        val active = AtomicInteger(0); val max = AtomicInteger(0)
+        withContext(Dispatchers.Default.limitedParallelism(limit)) {
+            repeat(tasks) {
+                launch {
+                    val c = active.incrementAndGet()
+                    max.updateAndGet { maxOf(c, it) }
+                }
+            }
+        }
+        return active.get()
+    }
 
     /**
      * С13. Выполни блок на «IO + имя name»; верни пару (имяВидимоеИзнутри, наIO).
@@ -105,8 +139,9 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(Dispatchers.IO + CoroutineName(name)){ (coroutineContext[CoroutineName]?.name) to (interceptor===IO) }.
      */
-    suspend fun runWithNameOnIO(name: String): Pair<String?, Boolean> =
-        TODO()
+    suspend fun runWithNameOnIO(name: String): Pair<String?, Boolean> = withContext(Dispatchers.IO + CoroutineName(name)) {
+        Pair(coroutineContext[CoroutineName]?.name, coroutineContext[CoroutineName]?.name != null)
+    }
 
     /**
      * С14. Параллельно примени f к каждому элементу items на IO, сохранив порядок.
@@ -126,7 +161,7 @@ object DispatchersTasks {
     suspend fun namePropagatesToAsync(name: String): String? =
         TODO()
 
-    // ═══════════════════════════ Сложные (16–20) ═══════════════════════════
+// ═══════════════════════════ Сложные (16–20) ═══════════════════════════
 
     /**
      * СЛ16. Просуммируй numbers параллельно на Default.limitedParallelism(parallelism).

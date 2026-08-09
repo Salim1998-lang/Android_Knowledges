@@ -1,6 +1,22 @@
 package handbook.flow
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.count
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.fold
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.runningReduce
+import kotlinx.coroutines.flow.scan
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.flow.zip
 
 /** Отписка от колбэк-источника (как ListenerRegistration/Disposable). */
 fun interface Subscription {
@@ -25,8 +41,14 @@ class IntEmitter {
         }
     }
 
-    fun emit(value: Int) { onEach?.invoke(value) }
-    fun complete() { onComplete?.invoke() }
+    fun emit(value: Int) {
+        onEach?.invoke(value)
+    }
+
+    fun complete() {
+        onComplete?.invoke()
+    }
+
     fun isSubscribed(): Boolean = onEach != null
 }
 
@@ -44,28 +66,28 @@ object FlowTasks {
     // ═══════════════════════════ Лёгкие (1–8) ═══════════════════════════
 
     /** Л1. Flow чисел от 1 до n. */
-    fun rangeFlow(n: Int): Flow<Int> = TODO()
+    fun rangeFlow(n: Int): Flow<Int> = (1..n).asFlow()
 
     /** Л2. Оставить чётные и возвести в квадрат. */
-    fun evenSquares(source: Flow<Int>): Flow<Int> = TODO()
+    fun evenSquares(source: Flow<Int>): Flow<Int> = source.filter { it % 2 == 0 }.map { it * it }
 
     /** Л3. Поток из элементов списка. */
-    fun <T> fromList(list: List<T>): Flow<T> = TODO()
+    fun <T> fromList(list: List<T>): Flow<T> = list.asFlow()
 
     /** Л4. Длины строк. */
-    fun mapLength(source: Flow<String>): Flow<Int> = TODO()
+    fun mapLength(source: Flow<String>): Flow<Int> = source.map { it.length }
 
     /** Л5. Первые n элементов. */
-    fun <T> takeN(source: Flow<T>, n: Int): Flow<T> = TODO()
+    fun <T> takeN(source: Flow<T>, n: Int): Flow<T> = source.take(n)
 
     /** Л6. Пропустить первые n элементов. */
-    fun <T> dropN(source: Flow<T>, n: Int): Flow<T> = TODO()
+    fun <T> dropN(source: Flow<T>, n: Int): Flow<T> = source.drop(n)
 
     /** Л7. Число элементов в потоке (терминальный count). */
-    suspend fun <T> countItems(source: Flow<T>): Int = TODO()
+    suspend fun <T> countItems(source: Flow<T>): Int = source.count()
 
     /** Л8. Собрать в отсортированный список. */
-    suspend fun toListSorted(source: Flow<Int>): List<Int> = TODO()
+    suspend fun toListSorted(source: Flow<Int>): List<Int> = source.toList().sorted()
 
     // ═══════════════════════════ Средние (9–15) ═══════════════════════════
 
@@ -77,7 +99,8 @@ object FlowTasks {
      *
      * Спойлер: scan(0){ acc, x -> acc + x }.drop(1).
      */
-    fun runningTotal(source: Flow<Int>): Flow<Int> = TODO()
+    fun runningTotal(source: Flow<Int>): Flow<Int> =
+        source.scan(0) { accumulator, value -> accumulator + value }.drop(1)
 
     /**
      * С10. Нарастающий максимум: [3,1,4,1,5] → [3,3,4,4,5].
@@ -87,7 +110,7 @@ object FlowTasks {
      *
      * Спойлер: runningReduce { acc, x -> maxOf(acc, x) }.
      */
-    fun runningMax(source: Flow<Int>): Flow<Int> = TODO()
+    fun runningMax(source: Flow<Int>): Flow<Int> = source.runningReduce { accumulator, value -> maxOf(accumulator, value) }
 
     /**
      * С11. Продублируй каждый элемент: [a,b] → [a,a,b,b].
@@ -96,7 +119,7 @@ object FlowTasks {
      *
      * Спойлер: transform { emit(it); emit(it) }.
      */
-    fun <T> duplicateEach(source: Flow<T>): Flow<T> = TODO()
+    fun <T> duplicateEach(source: Flow<T>): Flow<T> = source.transform { emit(it); emit(it) }
 
     /**
      * С12. Убери ПОДРЯД идущие дубликаты: [1,1,2,2,1] → [1,2,1] (не-соседние повторы остаются).
@@ -105,7 +128,7 @@ object FlowTasks {
      *
      * Спойлер: distinctUntilChanged().
      */
-    fun <T> dedupAdjacent(source: Flow<T>): Flow<T> = TODO()
+    fun <T> dedupAdjacent(source: Flow<T>): Flow<T> = source.distinctUntilChanged()
 
     /**
      * С13. Попарная сумма двух потоков: выход[i] = a[i] + b[i].
@@ -114,7 +137,7 @@ object FlowTasks {
      *
      * Спойлер: a.zip(b) { x, y -> x + y }.
      */
-    fun zipSum(a: Flow<Int>, b: Flow<Int>): Flow<Int> = TODO()
+    fun zipSum(a: Flow<Int>, b: Flow<Int>): Flow<Int> = a.zip(b) { a, b -> a + b }
 
     /**
      * С14. Преобразуй поток в пары (индекс, значение), индекс с 0.
@@ -123,8 +146,7 @@ object FlowTasks {
      *
      * Спойлер: withIndex().map { it.index to it.value }  (или счётчик в transform).
      */
-    fun <T> indexedPairs(source: Flow<T>): Flow<Pair<Int, T>> =
-        TODO()
+    fun <T> indexedPairs(source: Flow<T>): Flow<Pair<Int, T>> = source.withIndex().map { it.index to it.value }
 
     /**
      * С15. Терминальная операция: сумма всех элементов потока.
@@ -133,7 +155,7 @@ object FlowTasks {
      *
      * Спойлер: fold(0) { acc, x -> acc + x }.
      */
-    suspend fun foldSum(source: Flow<Int>): Int = TODO()
+    suspend fun foldSum(source: Flow<Int>): Int = source.fold(0) { a, b -> a + b }
 
     // ═══════════════════════════ Сложные (16–20) ═══════════════════════════
 
