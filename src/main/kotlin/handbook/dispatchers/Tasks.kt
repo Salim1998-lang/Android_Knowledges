@@ -3,7 +3,11 @@ package handbook.dispatchers
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Dispatchers.Default
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,15 +126,25 @@ object DispatchersTasks {
      */
     suspend fun observedConcurrency(limit: Int, tasks: Int): Int {
         val active = AtomicInteger(0); val max = AtomicInteger(0)
-        withContext(Dispatchers.Default.limitedParallelism(limit)) {
-            repeat(tasks) {
-                launch {
-                    val c = active.incrementAndGet()
-                    max.updateAndGet { maxOf(c, it) }
+        withContext(Default.limitedParallelism(limit)) {
+            coroutineScope {
+                repeat(tasks) {
+                    launch {
+                        val c = active.incrementAndGet()
+                        max.updateAndGet { maxOf(c, it) }
+                        busySpin(15)
+                        active.decrementAndGet()
+                    }
                 }
             }
         }
-        return active.get()
+        return max.get()
+    }
+
+    private fun busySpin(millis: Long) {
+        val end = System.nanoTime() + millis * 1_000_000
+        @Suppress("ControlFlowWithEmptyBody")
+        while (System.nanoTime() < end) { /* держим поток занятым, не приостанавливаясь */ }
     }
 
     /**
@@ -139,7 +153,7 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(Dispatchers.IO + CoroutineName(name)){ (coroutineContext[CoroutineName]?.name) to (interceptor===IO) }.
      */
-    suspend fun runWithNameOnIO(name: String): Pair<String?, Boolean> = withContext(Dispatchers.IO + CoroutineName(name)) {
+    suspend fun runWithNameOnIO(name: String): Pair<String?, Boolean> = withContext(IO + CoroutineName(name)) {
         Pair(coroutineContext[CoroutineName]?.name, coroutineContext[CoroutineName]?.name != null)
     }
 
@@ -149,8 +163,9 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(Dispatchers.IO){ items.map { async { f(it) } }.awaitAll() }.
      */
-    suspend fun <T, R> mapOnIO(items: List<T>, f: suspend (T) -> R): List<R> =
-        TODO()
+    suspend fun <T, R> mapOnIO(items: List<T>, f: suspend (T) -> R): List<R> = withContext(IO) {
+        items.map { async { f(it) } }.awaitAll()
+    }
 
     /**
      * С15. Под именем name запусти async и верни имя, которое видит его тело.
@@ -158,8 +173,9 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(CoroutineName(name)){ async { coroutineContext[CoroutineName]?.name }.await() }.
      */
-    suspend fun namePropagatesToAsync(name: String): String? =
-        TODO()
+    suspend fun namePropagatesToAsync(name: String): String? = withContext(CoroutineName(name)) {
+        async { coroutineContext[CoroutineName]?.name }.await()
+    }
 
 // ═══════════════════════════ Сложные (16–20) ═══════════════════════════
 
@@ -169,8 +185,9 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(Dispatchers.Default.limitedParallelism(parallelism)){ numbers.map { async { it } }.awaitAll().sum() }.
      */
-    suspend fun boundedParallelSum(numbers: List<Int>, parallelism: Int): Int =
-        TODO()
+    suspend fun boundedParallelSum(numbers: List<Int>, parallelism: Int): Int = withContext(Dispatchers.Default.limitedParallelism(parallelism)) {
+        numbers.map { async {  it } }.awaitAll().sum()
+    }
 
     /**
      * СЛ17. Round-trip: на Default → внутрь на IO → обратно (уже на Default). Верни [наDefault, наIO, сноваНаDefault].
@@ -178,8 +195,12 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(Default){ val a=interceptor===Default; val b=withContext(IO){interceptor===IO}; val c=interceptor===Default; listOf(a,b,c) }.
      */
-    suspend fun dispatcherRoundTrip(): List<Boolean> =
-        TODO()
+    suspend fun dispatcherRoundTrip(): List<Boolean> = withContext(Default) {
+        val a = coroutineContext[ContinuationInterceptor] === Default
+        val b = withContext(IO) { coroutineContext[ContinuationInterceptor] === IO };
+        val c = coroutineContext[ContinuationInterceptor] === Default
+        listOf(a, b, c)
+    }
 
     /**
      * СЛ18. Запусти ребёнка и проверь, что его Job — это ОТДЕЛЬНЫЙ Job, являющийся дочерним для текущего.
@@ -187,8 +208,14 @@ object DispatchersTasks {
      *
      * Спойлер: coroutineScope { val p=coroutineContext[Job]!!; var ok=false; launch { val c=coroutineContext[Job]!!; ok = c!==p && p.children.contains(c) }.join(); ok }.
      */
-    suspend fun childJobIsChildOfParent(): Boolean =
-        TODO()
+    suspend fun childJobIsChildOfParent(): Boolean = coroutineScope {
+        val p = coroutineContext[Job]!!
+        var b = false
+        launch {
+            b = (p !== coroutineContext[Job]!! && p.children.contains(coroutineContext[Job]))
+        }.join()
+        b
+    }
 
     /**
      * СЛ19. Конвейер: «загрузи» на IO (input*2), затем «обработай» на Default (+1).
@@ -197,8 +224,16 @@ object DispatchersTasks {
      *
      * Спойлер: val (io,data)=withContext(IO){ (interceptor===IO) to (input*2) }; val (def,res)=withContext(Default){ (interceptor===Default) to (data+1) }; Triple(io,def,res).
      */
-    suspend fun fetchThenProcess(input: Int): Triple<Boolean, Boolean, Int> =
-        TODO()
+    suspend fun fetchThenProcess(input: Int): Triple<Boolean, Boolean, Int> = withContext(IO) {
+        var i = input * 2
+        val io = coroutineContext[ContinuationInterceptor]!! === IO
+        var d = false
+        withContext(Default) {
+            i += 1
+            d = coroutineContext[ContinuationInterceptor]!! === Default
+        }
+        Triple(first = io, d, i)
+    }
 
     /**
      * СЛ20. Многоступенчатый pipeline с лимитом: для каждого input параллельно (не больше 4 разом)
@@ -207,6 +242,7 @@ object DispatchersTasks {
      *
      * Спойлер: withContext(Dispatchers.Default.limitedParallelism(4)){ inputs.map { x -> async { val f=withContext(IO){ x*2 }; f+1 } }.awaitAll() }.
      */
-    suspend fun stagedPipeline(inputs: List<Int>): List<Int> =
-        TODO()
+    suspend fun stagedPipeline(inputs: List<Int>): List<Int> = withContext(Dispatchers.Default.limitedParallelism(4)) {
+        inputs.map { x -> async { val f = withContext(IO) { x * 2}; f +1 } }.awaitAll()
+    }
 }

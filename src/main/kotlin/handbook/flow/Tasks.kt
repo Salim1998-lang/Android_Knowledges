@@ -1,15 +1,25 @@
 package handbook.flow
 
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.channels.trySendBlocking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.chunked
+import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.count
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.fold
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.retry
 import kotlinx.coroutines.flow.runningReduce
 import kotlinx.coroutines.flow.scan
 import kotlinx.coroutines.flow.take
@@ -17,6 +27,8 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.withIndex
 import kotlinx.coroutines.flow.zip
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 /** Отписка от колбэк-источника (как ListenerRegistration/Disposable). */
 fun interface Subscription {
@@ -110,7 +122,8 @@ object FlowTasks {
      *
      * Спойлер: runningReduce { acc, x -> maxOf(acc, x) }.
      */
-    fun runningMax(source: Flow<Int>): Flow<Int> = source.runningReduce { accumulator, value -> maxOf(accumulator, value) }
+    fun runningMax(source: Flow<Int>): Flow<Int> =
+        source.runningReduce { accumulator, value -> maxOf(accumulator, value) }
 
     /**
      * С11. Продублируй каждый элемент: [a,b] → [a,a,b,b].
@@ -169,7 +182,19 @@ object FlowTasks {
      */
     fun <T> chunked(source: Flow<T>, size: Int): Flow<List<T>> {
         require(size >= 1)
-        return TODO()
+        return flow {
+            val buffer = mutableListOf<T>()
+            source.collect { value ->
+                buffer.add(value)
+                if (buffer.size == size) {
+                    emit(buffer.toList())
+                    buffer.clear()
+                }
+            }
+            if (buffer.isNotEmpty()) {
+                emit(buffer.toList())
+            }
+        }
     }
 
     /**
@@ -181,7 +206,7 @@ object FlowTasks {
      * Спойлер: catch { emit(fallback) }.
      */
     fun <T> withFallback(source: Flow<T>, fallback: T): Flow<T> =
-        TODO()
+        source.catch { emit(fallback) }
 
     /**
      * СЛ18. При ошибке upstream перезапускай его сначала, до retries раз.
@@ -191,7 +216,7 @@ object FlowTasks {
      *
      * Спойлер: retry(retries).
      */
-    fun <T> retryUpstream(source: Flow<T>, retries: Long): Flow<T> = TODO()
+    fun <T> retryUpstream(source: Flow<T>, retries: Long): Flow<T> = source.retry(retries)
 
     /**
      * СЛ19. Разверни каждое число n в n копий n: [2,3] → [2,2,3,3,3].
@@ -201,8 +226,7 @@ object FlowTasks {
      *
      * Спойлер: flatMapConcat { n -> flow { repeat(n) { emit(n) } } }.
      */
-    fun expand(source: Flow<Int>): Flow<Int> =
-        TODO()
+    fun expand(source: Flow<Int>): Flow<Int> = source.flatMapConcat { n -> flow { repeat(n) { emit(n) } } }
 
     /**
      * СЛ20. Разбей поток на батчи по size и излучи СУММУ каждого батча (последний может быть неполным).
@@ -212,8 +236,7 @@ object FlowTasks {
      *
      * Спойлер: chunked(size), затем map { it.sum() } — или буфер во flow { }.
      */
-    fun batchSums(source: Flow<Int>, size: Int): Flow<Int> =
-        TODO()
+    fun batchSums(source: Flow<Int>, size: Int): Flow<Int> = source.chunked(size = size).map { it.sum() }
 
     // ═══════════════════════════ Мост с колбэк-API (21–22) ═══════════════════════════
 
@@ -227,8 +250,10 @@ object FlowTasks {
      *
      * Спойлер: callbackFlow { val sub = emitter.subscribe(onEach = { trySend(it) }, onComplete = { close() }); awaitClose { sub.cancel() } }.
      */
-    fun emitterFlow(emitter: IntEmitter): Flow<Int> =
-        TODO()
+    fun emitterFlow(emitter: IntEmitter): Flow<Int> = callbackFlow {
+        val subscription = emitter.subscribe(onEach = { trySend(it) }, onComplete = { close() })
+        awaitClose { subscription.cancel() }
+    }
 
     /**
      * СЛ22. Слей несколько Flow в один КОНКУРЕНТНО через `channelFlow` (обычный `flow { }` не умеет
@@ -239,6 +264,9 @@ object FlowTasks {
      *
      * Спойлер: channelFlow { sources.forEach { src -> launch { src.collect { send(it) } } } }.
      */
-    fun mergeConcurrently(sources: List<Flow<Int>>): Flow<Int> =
-        TODO()
+    fun mergeConcurrently(sources: List<Flow<Int>>): Flow<Int> = channelFlow {
+        sources.forEach { source ->
+            launch { source.collect { send(it) } }
+        }
+    }
 }
