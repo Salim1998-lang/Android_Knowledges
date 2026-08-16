@@ -18,7 +18,6 @@ fun main() {
         "10. testing      — runTest, виртуальное время, TestDispatcher, setMain, backgroundScope",
     )
 
-    // Модуль «Java для Android»: то, что нужно на сеньор-уровне, + задачи с тестами.
     val java = listOf(
         "1. corelang      — примитивы/обёртки, кэш Integer, String pool, == vs equals",
         "2. oop           — интерфейсы/default, наследование vs композиция, enum, вложенные классы",
