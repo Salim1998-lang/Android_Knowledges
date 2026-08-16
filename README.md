@@ -97,7 +97,7 @@ src/test/java/handbook/java/
 | 7 | Потоки и модель памяти (JMM) | `handbook.java.concurrency` | `Thread`/`Runnable`, `synchronized`, `volatile`, JMM/happens-before, atomic/CAS, `wait`/`notify`, дедлоки, `ThreadLocal` | ✅ |
 | 8 | java.util.concurrent | `handbook.java.concurrenthigh` | `ExecutorService`, `Future`/`CompletableFuture`, `ConcurrentHashMap`, `CopyOnWriteArrayList`, `BlockingQueue`, `CountDownLatch`/`Semaphore`/`CyclicBarrier`, `ReentrantLock`/`ReadWriteLock` | ✅ |
 | 9 | Память, GC и ссылки | `handbook.java.memory` | достижимость и GC, `strong`/`soft`/`weak`/`phantom`, `WeakHashMap`/`ReferenceQueue`, утечки в Android (`this$0`, статик, `Handler`) и лечение | ✅ |
-| 10 | Interop Java ↔ Kotlin | `handbook.java.interop` | `@Nullable`/`@NonNull`, platform types, `@JvmStatic`/`@JvmField`, SAM | ⬜ |
+| 10 | Interop Java ↔ Kotlin | `handbook.java.interop` | свойства↔геттеры, `object`/`companion`/`@JvmStatic`, `@JvmField`, top-level/`@JvmName`, `@JvmOverloads`, `data class`, SAM/`fun interface`, nullability/platform types, `@Throws`, function-типы | ✅ |
 
 Проверить тему Java:
 ```bash

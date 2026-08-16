@@ -29,7 +29,7 @@ fun main() {
         "7. concurrency   — Thread, synchronized, volatile, JMM/happens-before, atomic/CAS, wait/notify",
         "8. concurrenthigh— ExecutorService, Future/CompletableFuture, ConcurrentHashMap, BlockingQueue, локи",
         "9. memory        — GC, достижимость, strong/soft/weak/phantom, утечки в Android + лечение",
-        "10. interop      — ⬜ @Nullable, platform types, @JvmStatic, SAM",
+        "10. interop      — свойства/@JvmStatic/@JvmField/@JvmOverloads/@JvmName, SAM, nullability, @Throws",
     )
 
     println("=".repeat(64))
