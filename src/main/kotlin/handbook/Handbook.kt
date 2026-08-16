@@ -27,7 +27,7 @@ fun main() {
         "5. exceptions    — checked/unchecked, try-with-resources, suppressed, cause/chaining",
         "6. functional    — лямбды, method references, Stream API, коллекторы, Optional",
         "7. concurrency   — Thread, synchronized, volatile, JMM/happens-before, atomic/CAS, wait/notify",
-        "8. concurrenthigh— ⬜ ExecutorService, Future, ConcurrentHashMap, BlockingQueue",
+        "8. concurrenthigh— ExecutorService, Future/CompletableFuture, ConcurrentHashMap, BlockingQueue, локи",
         "9. memory        — ⬜ GC, утечки в Android, WeakReference/SoftReference",
         "10. interop      — ⬜ @Nullable, platform types, @JvmStatic, SAM",
     )
