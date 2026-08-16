@@ -1,7 +1,7 @@
 # Android Handbook 🤖
 
-Открытая **база знаний по Android**: теория, задачи с тестами и разборы. Материал накапливается
-темами — начиная с корутин Kotlin и мобильного систем-дизайна.
+Открытая **база знаний по Android**: теория, задачи с тестами и разборы. Готовые разделы — корутины
+Kotlin, Java для Android (сеньор-уровень) и мобильный систем-дизайн.
 
 ## 🧵 Корутины Kotlin
 
@@ -72,8 +72,9 @@ src/test/kotlin/handbook/
 
 Раздел про **Java на сеньор-уровне** — то, что нужно android-разработчику и спрашивают на
 собеседованиях, без легаси-мусора (AWT/Swing, апплеты, RMI, JDBC…). Устройство — как у корутин:
-в каждой теме `THEORY.md` + **20 задач** (Л1–Л8 / С9–С15 / СЛ16–СЛ20) с тестами и эталонными
-решениями. Отличие: задачи и решения — на **настоящей Java** (`src/main/java/handbook/java/`).
+**10 тем**, в каждой `THEORY.md` + **20 задач** трёх уровней (Л1–Л8 / С9–С15 / СЛ16–СЛ20) + тесты.
+Всего **200 задач** с эталонными решениями. Отличие: задачи и решения — на **настоящей Java**
+(`src/main/java/handbook/java/`), а тема interop использует и Kotlin.
 
 ```
 src/main/java/handbook/java/
@@ -86,18 +87,18 @@ src/test/java/handbook/java/
   <тема>/TasksTest.java ← тесты проверяют твои реализации из Tasks.java
 ```
 
-| № | Тема | Пакет | О чём | Статус |
-|---|------|-------|-------|--------|
-| 1 | Язык, типы, строки | `handbook.java.corelang` | примитивы/обёртки, кэш `Integer`, переполнение, String pool/immutability/`StringBuilder`, `==` vs `equals`, `char`-арифметика, передача по значению | ✅ |
-| 2 | ООП и структура классов | `handbook.java.oop` | интерфейсы + `default`/`static`, абстрактные классы, наследование vs композиция, порядок инициализации, `enum` с поведением, вложенные/внутренние/анонимные классы (+ утечки в Android) | ✅ |
-| 3 | Дженерики | `handbook.java.generics` | тип-параметры, границы, wildcards и **вариантность** (ко-/контра-/инвариантность, PECS), стирание типов и его обходы | ✅ |
-| 4 | Коллекции + equals/hashCode | `handbook.java.collections` | `List`/`Set`/`Map`, устройство `HashMap`, контракт `equals`/`hashCode`, `Comparator`/`Comparable`, `TreeMap`, `LinkedHashMap`→LRU, fail-fast | ✅ |
-| 5 | Исключения и ресурсы | `handbook.java.exceptions` | checked/unchecked, иерархия `Throwable`, try-with-resources + suppressed, `cause`/chaining, кастомные исключения | ✅ |
-| 6 | Функциональщина Java 8+ | `handbook.java.functional` | функциональные интерфейсы, лямбды, method references, Stream API, коллекторы, `Optional` | ✅ |
-| 7 | Потоки и модель памяти (JMM) | `handbook.java.concurrency` | `Thread`/`Runnable`, `synchronized`, `volatile`, JMM/happens-before, atomic/CAS, `wait`/`notify`, дедлоки, `ThreadLocal` | ✅ |
-| 8 | java.util.concurrent | `handbook.java.concurrenthigh` | `ExecutorService`, `Future`/`CompletableFuture`, `ConcurrentHashMap`, `CopyOnWriteArrayList`, `BlockingQueue`, `CountDownLatch`/`Semaphore`/`CyclicBarrier`, `ReentrantLock`/`ReadWriteLock` | ✅ |
-| 9 | Память, GC и ссылки | `handbook.java.memory` | достижимость и GC, `strong`/`soft`/`weak`/`phantom`, `WeakHashMap`/`ReferenceQueue`, утечки в Android (`this$0`, статик, `Handler`) и лечение | ✅ |
-| 10 | Interop Java ↔ Kotlin | `handbook.java.interop` | свойства↔геттеры, `object`/`companion`/`@JvmStatic`, `@JvmField`, top-level/`@JvmName`, `@JvmOverloads`, `data class`, SAM/`fun interface`, nullability/platform types, `@Throws`, function-типы | ✅ |
+| № | Тема | Пакет | О чём |
+|---|------|-------|-------|
+| 1 | Язык, типы, строки | `handbook.java.corelang` | примитивы/обёртки, кэш `Integer`, переполнение, String pool/immutability/`StringBuilder`, `==` vs `equals`, `char`-арифметика, передача по значению |
+| 2 | ООП и структура классов | `handbook.java.oop` | интерфейсы + `default`/`static`, абстрактные классы, наследование vs композиция, порядок инициализации, `enum` с поведением, вложенные/внутренние/анонимные классы (+ утечки в Android) |
+| 3 | Дженерики | `handbook.java.generics` | тип-параметры, границы, wildcards и **вариантность** (ко-/контра-/инвариантность, PECS), стирание типов и его обходы |
+| 4 | Коллекции + equals/hashCode | `handbook.java.collections` | `List`/`Set`/`Map`, устройство `HashMap`, контракт `equals`/`hashCode`, `Comparator`/`Comparable`, `TreeMap`, `LinkedHashMap`→LRU, fail-fast |
+| 5 | Исключения и ресурсы | `handbook.java.exceptions` | checked/unchecked, иерархия `Throwable`, try-with-resources + suppressed, `cause`/chaining, кастомные исключения |
+| 6 | Функциональщина Java 8+ | `handbook.java.functional` | функциональные интерфейсы, лямбды, method references, Stream API, коллекторы, `Optional` |
+| 7 | Потоки и модель памяти (JMM) | `handbook.java.concurrency` | `Thread`/`Runnable`, `synchronized`, `volatile`, JMM/happens-before, atomic/CAS, `wait`/`notify`, дедлоки, `ThreadLocal` |
+| 8 | java.util.concurrent | `handbook.java.concurrenthigh` | `ExecutorService`, `Future`/`CompletableFuture`, `ConcurrentHashMap`, `CopyOnWriteArrayList`, `BlockingQueue`, `CountDownLatch`/`Semaphore`/`CyclicBarrier`, `ReentrantLock`/`ReadWriteLock` |
+| 9 | Память, GC и ссылки | `handbook.java.memory` | достижимость и GC, `strong`/`soft`/`weak`/`phantom`, `WeakHashMap`/`ReferenceQueue`, утечки в Android (`this$0`, статик, `Handler`) и лечение |
+| 10 | Interop Java ↔ Kotlin | `handbook.java.interop` | свойства↔геттеры, `object`/`companion`/`@JvmStatic`, `@JvmField`, top-level/`@JvmName`, `@JvmOverloads`, `data class`, SAM/`fun interface`, nullability/platform types, `@Throws`, function-типы |
 
 Проверить тему Java:
 ```bash
