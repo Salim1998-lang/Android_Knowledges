@@ -9,8 +9,9 @@
 **~20 задач** трёх уровней сложности (лёгкие + средние + сложные) + тесты, которые проверяют
 твоё решение. Всего **209 задач** с эталонными решениями.
 
-> 📚 Репозиторий растёт в **открытую базу знаний по Android**. Помимо корутин здесь появляются и
-> другие темы — начиная с [**мобильного систем-дизайна**](docs/system-design/README.md).
+> 📚 Репозиторий растёт в **открытую базу знаний по Android**. Помимо корутин здесь есть модуль
+> [**Java для Android**](#-java-для-android) (сеньор-уровень + задачи) и раздел
+> [**мобильного систем-дизайна**](docs/system-design/README.md).
 
 ## Как это устроено
 
@@ -66,6 +67,42 @@ src/test/kotlin/handbook/
 | 8 | Каналы | `handbook.channels` | `Channel`, `produce`, pipelines, fan-in / fan-out |
 | 9 | Разделяемое состояние | `handbook.concurrency` | гонки, `Mutex`, атомики/CAS, замыкание на поток, actor, lock striping |
 | 10 | Тестирование корутин | `handbook.testing` | `runTest`, виртуальное время, `currentTime`/`advanceTimeBy`, `TestDispatcher` (Standard/Unconfined), `setMain`, `backgroundScope` |
+
+## ☕ Java для Android
+
+Раздел про **Java на сеньор-уровне** — то, что нужно android-разработчику и спрашивают на
+собеседованиях, без легаси-мусора (AWT/Swing, апплеты, RMI, JDBC…). Устройство — как у корутин:
+в каждой теме `THEORY.md` + **20 задач** (Л1–Л8 / С9–С15 / СЛ16–СЛ20) с тестами и эталонными
+решениями. Отличие: задачи и решения — на **настоящей Java** (`src/main/java/handbook/java/`).
+
+```
+src/main/java/handbook/java/
+  <тема>/
+    THEORY.md          ← теория (читать первым)
+    Tasks.java         ← 20 ЗАДАЧ: тела кидают UnsupportedOperationException("TODO ...")
+    solutions/
+      Solutions.java   ← эталонные решения
+src/test/java/handbook/java/
+  <тема>/TasksTest.java ← тесты проверяют твои реализации из Tasks.java
+```
+
+| № | Тема | Пакет | О чём | Статус |
+|---|------|-------|-------|--------|
+| 1 | Язык, типы, строки | `handbook.java.corelang` | примитивы/обёртки, кэш `Integer`, переполнение, String pool/immutability/`StringBuilder`, `==` vs `equals`, `char`-арифметика, передача по значению | ✅ |
+| 2 | ООП и структура классов | `handbook.java.oop` | интерфейсы + `default`/`static`, абстрактные классы, наследование vs композиция, порядок инициализации, `enum` с поведением, вложенные/внутренние/анонимные классы (+ утечки в Android) | ✅ |
+| 3 | Дженерики | `handbook.java.generics` | тип-параметры, границы, wildcards и **вариантность** (ко-/контра-/инвариантность, PECS), стирание типов и его обходы | ✅ |
+| 4 | Коллекции + equals/hashCode | `handbook.java.collections` | `List`/`Set`/`Map`, устройство `HashMap`, контракт `equals`/`hashCode`, `Comparator`/`Comparable`, `TreeMap`, `LinkedHashMap`→LRU, fail-fast | ✅ |
+| 5 | Исключения и ресурсы | `handbook.java.exceptions` | checked/unchecked, иерархия `Throwable`, try-with-resources + suppressed, `cause`/chaining, кастомные исключения | ✅ |
+| 6 | Функциональщина Java 8+ | `handbook.java.functional` | функциональные интерфейсы, лямбды, method references, Stream API, коллекторы, `Optional` | ✅ |
+| 7 | Потоки и модель памяти (JMM) | `handbook.java.concurrency` | `Thread`/`Runnable`, `synchronized`, `volatile`, JMM/happens-before, atomic/CAS, `wait`/`notify`, дедлоки, `ThreadLocal` | ✅ |
+| 8 | java.util.concurrent | `handbook.java.concurrenthigh` | `ExecutorService`, `Future`, `ConcurrentHashMap`, `BlockingQueue`, `CountDownLatch` | ⬜ |
+| 9 | Память, GC и ссылки | `handbook.java.memory` | GC, утечки в Android, `WeakReference`/`SoftReference`, `ThreadLocal` | ⬜ |
+| 10 | Interop Java ↔ Kotlin | `handbook.java.interop` | `@Nullable`/`@NonNull`, platform types, `@JvmStatic`/`@JvmField`, SAM | ⬜ |
+
+Проверить тему Java:
+```bash
+./gradlew test --tests "handbook.java.corelang.*"
+```
 
 ## 🏗️ База знаний: Систем-дизайн
 
