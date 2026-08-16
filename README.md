@@ -96,7 +96,7 @@ src/test/java/handbook/java/
 | 6 | Функциональщина Java 8+ | `handbook.java.functional` | функциональные интерфейсы, лямбды, method references, Stream API, коллекторы, `Optional` | ✅ |
 | 7 | Потоки и модель памяти (JMM) | `handbook.java.concurrency` | `Thread`/`Runnable`, `synchronized`, `volatile`, JMM/happens-before, atomic/CAS, `wait`/`notify`, дедлоки, `ThreadLocal` | ✅ |
 | 8 | java.util.concurrent | `handbook.java.concurrenthigh` | `ExecutorService`, `Future`/`CompletableFuture`, `ConcurrentHashMap`, `CopyOnWriteArrayList`, `BlockingQueue`, `CountDownLatch`/`Semaphore`/`CyclicBarrier`, `ReentrantLock`/`ReadWriteLock` | ✅ |
-| 9 | Память, GC и ссылки | `handbook.java.memory` | GC, утечки в Android, `WeakReference`/`SoftReference`, `ThreadLocal` | ⬜ |
+| 9 | Память, GC и ссылки | `handbook.java.memory` | достижимость и GC, `strong`/`soft`/`weak`/`phantom`, `WeakHashMap`/`ReferenceQueue`, утечки в Android (`this$0`, статик, `Handler`) и лечение | ✅ |
 | 10 | Interop Java ↔ Kotlin | `handbook.java.interop` | `@Nullable`/`@NonNull`, platform types, `@JvmStatic`/`@JvmField`, SAM | ⬜ |
 
 Проверить тему Java:
