@@ -31,6 +31,18 @@ fun main() {
         "10. interop      — свойства/@JvmStatic/@JvmField/@JvmOverloads/@JvmName, SAM, nullability, @Throws",
     )
 
+    // Модуль в работе: готовы темы 1–8, остальные добавляются по порядку.
+    val android = listOf(
+        "1. looper        — главный поток, Looper/Handler/MessageQueue, when-очередь, sync-барьер, idle, jank/ANR",
+        "2. handlerthread — HandlerThread, confinement, quit/quitSafely, обмен между потоками, конвейеры",
+        "3. pools         — ThreadPoolExecutor: core/max/очередь, sizing CPU vs IO, ThreadFactory, rejection-политики",
+        "4. priority      — nice vs Thread priority, веса CFS/vruntime, cgroup, starvation, инверсия/наследование, RT",
+        "5. queues        — BlockingQueue, backpressure, throttle/debounce/sample/конфляция, drop, батчинг, credit",
+        "6. anr           — бюджет кадра/vsync, Choreographer, каскад/jank-метрики, пороги ANR, StrictMode",
+        "7. binder        — Binder-пул, sync/oneway, колбэки на Binder-треде, реентрантность, приоритет, дедлоки IPC",
+        "8. background     — WorkManager/JobScheduler, Doze/App Standby, constraints, backoff/ретраи, FGS, цепочки",
+    )
+
     println("=".repeat(64))
     println("  Android Handbook")
     println("=".repeat(64))
@@ -40,6 +52,9 @@ fun main() {
 
     println("\n☕ Java для Android   (пакеты handbook.java.*)")
     java.forEach { println("   $it") }
+
+    println("\n📱 Многопоточность в Android  (пакеты handbook.android.*)")
+    android.forEach { println("   $it") }
 
     println()
     println("Для каждой темы: THEORY.md → реши задачи в Tasks → прогони тесты.")

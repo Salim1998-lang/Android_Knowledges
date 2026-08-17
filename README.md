@@ -1,7 +1,8 @@
 # Android Handbook 🤖
 
 Открытая **база знаний по Android**: теория, задачи с тестами и разборы. Готовые разделы — корутины
-Kotlin, Java для Android (сеньор-уровень) и мобильный систем-дизайн.
+Kotlin, Java для Android (сеньор-уровень) и мобильный систем-дизайн. В работе — модуль
+[**многопоточность в Android**](#-многопоточность-в-android) (сеньор-уровень).
 
 ## 🧵 Корутины Kotlin
 
@@ -103,6 +104,47 @@ src/test/java/handbook/java/
 Проверить тему Java:
 ```bash
 ./gradlew test --tests "handbook.java.corelang.*"
+```
+
+## 📱 Многопоточность в Android
+
+Раздел про **многопоточность на сеньор-уровне именно в Android** — то, что даёт не JVM, а сам
+фреймворк, и что спрашивают на собеседованиях. Примитивы JMM/локов/пулов не дублируем: они уже
+разобраны в модуле [Java для Android](#-java-для-android) (темы 7–8), сюда ссылаемся. Устройство —
+как у корутин: **10 тем**, в каждой `THEORY.md` + **~20 задач** трёх уровней (Л1–Л8 / С9–С15 /
+СЛ16–СЛ20) + тесты. Задачи детерминированно моделируют механику Android-рантайма на чистой JVM
+(без эмулятора/Robolectric).
+
+> Модуль **в работе**: готовы темы 1–8, остальные добавляются по порядку (см. статус в таблице).
+
+```
+src/main/kotlin/handbook/android/
+  <тема>/
+    THEORY.md          ← теория (читать первым)
+    Model.kt           ← учебная модель Android-примитивов (провайдится, не TODO)
+    Tasks.kt           ← 20 ЗАДАЧ: функции с KDoc и телом TODO()
+    solutions/
+      Solutions.kt     ← эталонные решения
+src/test/kotlin/handbook/android/
+  <тема>/<Тема>Test.kt ← тесты проверяют твои реализации из Tasks.kt
+```
+
+| № | Тема | Пакет | О чём (senior) | Статус |
+|---|------|-------|----------------|:---:|
+| 1 | Главный поток и цикл событий | `handbook.android.looper` | `Looper`/`Handler`/`MessageQueue`, `when`-очередь, `postDelayed`, `removeCallbacks`, sync-барьер, `IdleHandler`, thread confinement, `quitSafely`, head-of-line blocking → jank/ANR | ✅ |
+| 2 | Фоновые Handler-потоки | `handbook.android.handlerthread` | `HandlerThread` = поток + `Looper`, сериализация и thread confinement (без локов), `quit`/`quitSafely`, round-trip на главный поток, общий `Looper` для многих `Handler`, backpressure, шардирование, конвейеры, пинг-понг, отмена работы после смерти владельца | ✅ |
+| 3 | Пулы потоков в Android | `handbook.android.pools` | `ThreadPoolExecutor` изнутри: связка core/max/очередь (подвох безграничной очереди), sizing CPU- vs IO-bound (формула Гётца), `ThreadFactory` (имена + приоритет фона), rejection-политики (Abort/CallerRuns/Discard), `shutdown` vs `shutdownNow`, прогрев, изоляция пулов, потолок параллелизма | ✅ |
+| 4 | Приоритеты и планирование | `handbook.android.priority` | nice vs `Thread` priority, `Process.THREAD_PRIORITY_*`, веса CFS и доля CPU, планирование через vruntime, background-cgroup, строгий приоритет и starvation, инверсия приоритетов + наследование (в т.ч. транзитивное), RT-классы, джанк из-за приоритета фона | ✅ |
+| 5 | Producer-consumer и backpressure | `handbook.android.queues` | `BlockingQueue` (put/take/offer/poll/drainTo, poison-pill), ограниченная очередь как backpressure, fan-in/fan-out, throttle/debounce/sample, конфляция (latest-wins), drop-oldest/latest, батчинг по кол-ву/времени, credit-based (request-N), композиция операторов | ✅ |
+| 6 | ANR, кадры и jank | `handbook.android.anr` | бюджет кадра / refresh rate (16/11/8 мс), vsync и фазы `Choreographer`, dropped frames и каскад презентаций, метрики jank (janky %, перцентили, worst hitch, streak), пороги ANR, задержка ввода от бэклога главного потока, `StrictMode` (детект диск/сеть, penaltyDeath) | ✅ |
+| 7 | Binder и IPC-треды | `handbook.android.binder` | пул Binder-тредов (~16) и его исчерпание, входящие транзакции/AIDL-колбэки на Binder-треде (не главном) → post на UI, sync (блокирует, риск ANR) vs `oneway` (async, сериализация к одному биндеру, без return), реентрантность и thread migration, реентрантный дедлок с локом, наследование приоритета через IPC (`min(nice)`), буфер ~1 МБ / `TransactionTooLargeException` / async-половина, `DeadObjectException`/`linkToDeath`, распределённый дедлок (цикл sync-вызовов) | ✅ |
+| 8 | Фоновое выполнение и гарантии | `handbook.android.background` | почему голый `Thread` не даёт гарантий, что переживает reboot (WorkManager/JobScheduler), Doze и App Standby buckets (deferral), `Worker.doWork()` на фоновом потоке, constraints (сеть/зарядка/idle) и их ожидание во времени, backoff `LINEAR`/`EXPONENTIAL` с клампом и суммарная задержка, `Result.retry()`/ретраи до успеха, уникальная работа (`REPLACE`/`KEEP`/`APPEND`), цепочки и каскадная отмена потомков, foreground service (+нотификация), expedited-квоты, лимит JobScheduler, коалесинг будильников | ✅ |
+| 9 | Потоки и жизненный цикл | `handbook.android.lifecycle` | публикация на главный поток, отмена при уничтожении, гонки config change, утечки `Handler` | ⬜ |
+| 10 | Диагностика многопоточности | `handbook.android.diagnostics` | `StrictMode`, Perfetto/systrace, thread dumps, детект дедлоков, чтение ANR-трейсов | ⬜ |
+
+Проверить тему Android:
+```bash
+./gradlew test --tests "handbook.android.looper.*"
 ```
 
 ## 🏗️ База знаний: Систем-дизайн
