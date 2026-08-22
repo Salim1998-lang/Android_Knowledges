@@ -31,7 +31,7 @@ fun main() {
         "10. interop      — свойства/@JvmStatic/@JvmField/@JvmOverloads/@JvmName, SAM, nullability, @Throws",
     )
 
-    // Модуль в работе: готовы темы 1–9, остальные добавляются по порядку.
+    // Модуль многопоточности в Android: готовы все 10 тем.
     val android = listOf(
         "1. looper        — главный поток, Looper/Handler/MessageQueue, when-очередь, sync-барьер, idle, jank/ANR",
         "2. handlerthread — HandlerThread, confinement, quit/quitSafely, обмен между потоками, конвейеры",
@@ -42,6 +42,7 @@ fun main() {
         "7. binder        — Binder-пул, sync/oneway, колбэки на Binder-треде, реентрантность, приоритет, дедлоки IPC",
         "8. background     — WorkManager/JobScheduler, Doze/App Standby, constraints, backoff/ретраи, FGS, цепочки",
         "9. lifecycle     — доставка на главный поток, config change (ViewModel), утечки Handler, LiveData, repeatOnLifecycle",
+        "10. diagnostics  — StrictMode, thread dump/ANR-трейс, детект дедлока (цикл waits-for), Perfetto self-time",
     )
 
     println("=".repeat(64))

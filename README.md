@@ -1,8 +1,8 @@
 # Android Handbook 🤖
 
 Открытая **база знаний по Android**: теория, задачи с тестами и разборы. Готовые разделы — корутины
-Kotlin, Java для Android (сеньор-уровень) и мобильный систем-дизайн. В работе — модуль
-[**многопоточность в Android**](#-многопоточность-в-android) (сеньор-уровень).
+Kotlin, Java для Android (сеньор-уровень), [**многопоточность в Android**](#-многопоточность-в-android)
+(сеньор-уровень) и мобильный систем-дизайн.
 
 ## 🧵 Корутины Kotlin
 
@@ -115,7 +115,7 @@ src/test/java/handbook/java/
 СЛ16–СЛ20) + тесты. Задачи детерминированно моделируют механику Android-рантайма на чистой JVM
 (без эмулятора/Robolectric).
 
-> Модуль **в работе**: готовы темы 1–9, остальные добавляются по порядку (см. статус в таблице).
+> Модуль **готов**: все 10 тем с теорией, задачами и тестами (см. таблицу).
 
 ```
 src/main/kotlin/handbook/android/
@@ -140,7 +140,7 @@ src/test/kotlin/handbook/android/
 | 7 | Binder и IPC-треды | `handbook.android.binder` | пул Binder-тредов (~16) и его исчерпание, входящие транзакции/AIDL-колбэки на Binder-треде (не главном) → post на UI, sync (блокирует, риск ANR) vs `oneway` (async, сериализация к одному биндеру, без return), реентрантность и thread migration, реентрантный дедлок с локом, наследование приоритета через IPC (`min(nice)`), буфер ~1 МБ / `TransactionTooLargeException` / async-половина, `DeadObjectException`/`linkToDeath`, распределённый дедлок (цикл sync-вызовов) | ✅ |
 | 8 | Фоновое выполнение и гарантии | `handbook.android.background` | почему голый `Thread` не даёт гарантий, что переживает reboot (WorkManager/JobScheduler), Doze и App Standby buckets (deferral), `Worker.doWork()` на фоновом потоке, constraints (сеть/зарядка/idle) и их ожидание во времени, backoff `LINEAR`/`EXPONENTIAL` с клампом и суммарная задержка, `Result.retry()`/ретраи до успеха, уникальная работа (`REPLACE`/`KEEP`/`APPEND`), цепочки и каскадная отмена потомков, foreground service (+нотификация), expedited-квоты, лимит JobScheduler, коалесинг будильников | ✅ |
 | 9 | Потоки и жизненный цикл | `handbook.android.lifecycle` | «активность» (≥ STARTED) и почему трогать UI только тогда, публикация результата фоновой работы на главный поток с проверкой состояния (`DeliverAction`: DROP/POST/DELIVER), config change (Activity пересоздаётся, `ViewModel`/`viewModelScope` переживают) vs `lifecycleScope` (отмена в onDestroy), утечки нестатического `Handler` и окно утечки отложенного сообщения, стейл-колбэки после destroy, семантика `LiveData` (только активным + sticky-реплей + коалесинг `postValue`, `setValue` на главном), `repeatOnLifecycle(STARTED)` (активность + перезапуск сбора), `WeakReference`-колбэки | ✅ |
-| 10 | Диагностика многопоточности | `handbook.android.diagnostics` | `StrictMode`, Perfetto/systrace, thread dumps, детект дедлоков, чтение ANR-трейсов | ⬜ |
+| 10 | Диагностика многопоточности | `handbook.android.diagnostics` | `StrictMode` (`ThreadPolicy` диск/сеть на main, `VmPolicy` утечки, агрегация penalty `LOG<DIALOG<DROPBOX<DEATH`), состояния потоков в thread dump (RUNNABLE/BLOCKED/WAITING), Perfetto/systrace (баланс и глубина секций, **self-time** секции), чтение ANR-трейса (старт с `main`, виновник на шаг и раскрутка корня по цепочке «ждёт лок → держатель»), детект дедлока как **цикла в графе waits-for** + список участников, длина цепочки блокировки | ✅ |
 
 Проверить тему Android:
 ```bash
