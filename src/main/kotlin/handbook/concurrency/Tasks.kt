@@ -1,6 +1,18 @@
 package handbook.concurrency
 
+import handbook.concurrency.solutions.ConcurrencySolutions.Get
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
+import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
 /** Общий изменяемый держатель — «ящик» для задач про read-modify-write. */
@@ -22,56 +34,106 @@ object ConcurrencyTasks {
     // ═══════════════════════════ Лёгкие (1–8) ═══════════════════════════
 
     /** Л1. Выполни block под замком и верни его результат (withLock возвращает значение). */
-    suspend fun <T> guard(mutex: Mutex, block: () -> T): T =
-        TODO()
+    suspend fun <T> guard(mutex: Mutex, block: () -> T): T = mutex.withLock { block() }
 
     /**
      * Л2. Запусти `times` корутин на Dispatchers.Default; каждая увеличивает общий счётчик на 1
      *     ПОД Mutex. Верни итог (== times).
      * Спойлер: val m = Mutex(); var c = 0; withContext(Default){ coroutineScope{ repeat(times){ launch{ m.withLock{ c++ } } } } }; c.
      */
-    suspend fun mutexIncrements(times: Int): Int =
-        TODO()
+    suspend fun mutexIncrements(times: Int): Int {
+        val m = Mutex()
+        var c = 0
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                repeat(times) {
+                    launch { m.withLock { c++ } }
+                }
+            }
+        }
+        return c
+    }
 
     /**
      * Л3. То же, но через AtomicInteger вместо Mutex.
      * Спойлер: val c = AtomicInteger(0); ... launch { c.incrementAndGet() }; c.get().
      */
-    suspend fun atomicIncrements(times: Int): Int =
-        TODO()
+    suspend fun atomicIncrements(times: Int): Int {
+        val c = AtomicInteger(0)
+        val m = Mutex()
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                repeat(times) {
+                    launch {
+                        m.withLock { c.updateAndGet { it + 1 } }
+                    }
+                }
+            }
+        }
+        return c.get()
+    }
 
     /**
      * Л4. Конкурентно (по корутине на элемент) добавь каждый элемент values в общий список ПОД Mutex.
      *     Верни получившийся список (порядок не важен — тест сверяет множество и размер).
-     * Спойлер: общий MutableList + Mutex; launch на элемент; m.withLock { list.add(v) }.
      */
-    suspend fun safeAppendAll(values: List<Int>): List<Int> =
-        TODO()
+    suspend fun safeAppendAll(values: List<Int>): List<Int> {
+        val mutex = Mutex()
+        val resultList = mutableListOf<Int>()
+        coroutineScope {
+            values.forEach { value ->
+                launch(Dispatchers.Default) {
+                    mutex.withLock { resultList.add(value) }
+                }
+            }
+        }
+        return resultList
+    }
 
     /**
      * Л5. Конкурентно просуммируй числа: по корутине на элемент, прибавление к общей сумме ПОД Mutex.
-     * Спойлер: var sum = 0; launch на элемент; m.withLock { sum += x }.
      */
-    suspend fun sumConcurrently(numbers: List<Int>): Int =
-        TODO()
+    suspend fun sumConcurrently(numbers: List<Int>): Int {
+        val sum = AtomicInteger(0)
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                numbers.forEach { value ->
+                    launch {
+                        sum.updateAndGet { it + value }
+                    }
+                }
+            }
+        }
+        return sum.get()
+    }
 
     /** Л6. Атомарно прибавь delta и верни новое значение. Спойлер: counter.addAndGet(delta). */
-    fun atomicAddAndGet(counter: AtomicInteger, delta: Int): Int =
-        TODO()
+    fun atomicAddAndGet(counter: AtomicInteger, delta: Int): Int = counter.addAndGet(delta)
 
     /**
      * Л7. Установи newValue, только если счётчик сейчас равен 0; верни, удалось ли.
      * Спойлер: counter.compareAndSet(0, newValue).
      */
-    fun setIfZero(counter: AtomicInteger, newValue: Int): Boolean =
-        TODO()
+    fun setIfZero(counter: AtomicInteger, newValue: Int): Boolean = counter.compareAndSet(0, newValue)
 
     /**
      * Л8. Запусти `times` корутин; каждая уменьшает счётчик (старт = start) на 1 ПОД Mutex. Верни итог.
      * Спойлер: как Л2, но c-- ; итог == start - times.
      */
-    suspend fun mutexDecrements(start: Int, times: Int): Int =
-        TODO()
+    suspend fun mutexDecrements(start: Int, times: Int): Int {
+        val m = Mutex()
+        var c = start
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                repeat(times) {
+                    launch {
+                        m.withLock { c-- }
+                    }
+                }
+            }
+        }
+        return c
+    }
 
     // ═══════════════════════════ Средние (9–15) ═══════════════════════════
 
@@ -82,8 +144,19 @@ object ConcurrencyTasks {
      *
      * Спойлер: val m = Mutex(); withContext(Default){ coroutineScope{ repeat(times){ launch{ m.withLock{ box.value = box.value + 1 } } } } }; box.value.
      */
-    suspend fun concurrentReadModifyWrite(box: IntBox, times: Int): Int =
-        TODO()
+    suspend fun concurrentReadModifyWrite(box: IntBox, times: Int): Int {
+        val m = Mutex()
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                repeat(times) {
+                    launch {
+                        m.withLock { box.value += 1 }
+                    }
+                }
+            }
+        }
+        return box.value
+    }
 
     /**
      * С10. ТОНКОЕ замыкание на поток: каждый инкремент гони на один single-thread диспетчер.
@@ -91,8 +164,26 @@ object ConcurrencyTasks {
      *
      * Спойлер: val ctx = Executors.newSingleThreadExecutor().asCoroutineDispatcher(); try{ ... launch{ withContext(ctx){ c++ } } } finally { ctx.close() }.
      */
-    suspend fun confinedCounterFine(times: Int): Int =
-        TODO()
+    suspend fun confinedCounterFine(times: Int): Int {
+        val ctx = Dispatchers.Default.limitedParallelism(1)
+        try {
+            var count = 0
+            withContext(Dispatchers.Default) {
+                coroutineScope {
+                    repeat(times) {
+                        launch {
+                            withContext(ctx) {
+                                count++
+                            }
+                        }
+                    }
+                }
+            }
+            return count
+        } finally {
+            ctx.cancel()
+        }
+    }
 
     /**
      * С11. ГРУБОЕ замыкание: весь блок с инкрементами выполни на одном single-thread диспетчере.
@@ -100,8 +191,24 @@ object ConcurrencyTasks {
      *
      * Спойлер: withContext(ctx){ coroutineScope{ repeat(times){ launch{ c++ } } } }.
      */
-    suspend fun confinedCounterCoarse(times: Int): Int =
-        TODO()
+    suspend fun confinedCounterCoarse(times: Int): Int {
+        val ctx = Dispatchers.Default.limitedParallelism(1)
+        try {
+            var count = 0
+            withContext(ctx) {
+                coroutineScope {
+                    repeat(times) {
+                        launch {
+                            count++
+                        }
+                    }
+                }
+            }
+            return count
+        } finally {
+            ctx.cancel()
+        }
+    }
 
     /**
      * С12. Конкурентно посчитай частоты слов (по корутине на слово), общий MutableMap под Mutex.
@@ -109,8 +216,20 @@ object ConcurrencyTasks {
      *
      * Спойлер: m.withLock { map[w] = (map[w] ?: 0) + 1 } — RMW над map целиком под замком.
      */
-    suspend fun wordFrequencies(words: List<String>): Map<String, Int> =
-        TODO()
+    suspend fun wordFrequencies(words: List<String>): Map<String, Int> {
+        val map = mutableMapOf<String, Int>()
+        val m = Mutex()
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                for (word in words) {
+                    launch {
+                        m.withLock { map[word] = map.getOrDefault(word, 0) + 1 }
+                    }
+                }
+            }
+        }
+        return map
+    }
 
     /**
      * С13. Конкурентно найди максимум candidates, обновляя общий AtomicInteger CAS-циклом.
@@ -118,8 +237,27 @@ object ConcurrencyTasks {
      *
      * Спойлер: launch на элемент; while(true){ val cur=a.get(); if(x<=cur) break; if(a.compareAndSet(cur,x)) break }.
      */
-    suspend fun atomicMax(candidates: List<Int>): Int =
-        TODO()
+    suspend fun atomicMax(candidates: List<Int>): Int {
+        val a = AtomicInteger(0)
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                for (candidate in candidates) {
+                    launch {
+                        while (true) {
+                            val cur = a.get()
+                            if (candidate <= cur) {
+                                break
+                            }
+                            if (a.compareAndSet(cur, candidate)) {
+                                break
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return a.get()
+    }
 
     /**
      * С14. Per-key атомики: на каждый ключ — свой AtomicInteger (предзаполнен нулями). Конкурентно
@@ -128,8 +266,19 @@ object ConcurrencyTasks {
      *
      * Спойлер: val counters = keys.distinct().associateWith { AtomicInteger(0) }; launch на элемент { counters[k]!!.incrementAndGet() }.
      */
-    suspend fun perKeyCounts(keys: List<String>): Map<String, Int> =
-        TODO()
+    suspend fun perKeyCounts(keys: List<String>): Map<String, Int> {
+        val counters = keys.distinct().associateWith { AtomicInteger(0) }
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                for (key in keys) {
+                    launch {
+                        counters.getValue(key).incrementAndGet()
+                    }
+                }
+            }
+        }
+        return counters.mapValues { it.value.get() }
+    }
 
     /**
      * С15. Конкурентно применить переводы к balances: каждый transfer (from, to, amount) списывает
@@ -139,8 +288,22 @@ object ConcurrencyTasks {
      *
      * Спойлер: m.withLock { balances[from]-=amount; balances[to]+=amount } — обе строки в одной критической секции.
      */
-    suspend fun applyTransfers(balances: IntArray, transfers: List<Triple<Int, Int, Int>>): IntArray =
-        TODO()
+    suspend fun applyTransfers(balances: IntArray, transfers: List<Triple<Int, Int, Int>>): IntArray {
+        val m = Mutex()
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                for ((from, to, amount) in transfers) {
+                    launch {
+                        m.withLock {
+                            balances[from] -= amount
+                            balances[to] += amount
+                        }
+                    }
+                }
+            }
+        }
+        return balances
+    }
 
     // ═══════════════════════════ Сложные (16–20) ═══════════════════════════
 
@@ -152,8 +315,38 @@ object ConcurrencyTasks {
      * Спойлер: Channel<Msg>; launch { var s=0; for(m in ch) when(m){ Inc->s++; is Get->m.reply.complete(s) } };
      *          отправить times × Inc (дождаться), затем Get с CompletableDeferred; закрыть канал.
      */
-    suspend fun counterActorFinalValue(times: Int): Int =
-        TODO()
+
+    private sealed interface Msg
+    private data class Inc(val value: Int) : Msg
+    private data class Get(val reply: CompletableDeferred<Int>) : Msg
+
+    suspend fun counterActorFinalValue(times: Int): Int = coroutineScope {
+        val ch = Channel<Msg>()
+        val owner = launch {
+            var state = 0
+            for (msg in ch) {
+                when (msg) {
+                    is Inc -> state += msg.value
+                    is Get -> msg.reply.complete(state)
+                }
+            }
+        }
+        withContext(Dispatchers.Default) {
+            coroutineScope {
+                repeat(times) {
+                    launch {
+                        ch.send(Inc(1))
+                    }
+                }
+            }
+        }
+        val reply = CompletableDeferred<Int>()
+        ch.send(Get(reply))
+        val result = reply.await()
+        ch.close()
+        owner.join()
+        result
+    }
 
     /**
      * СЛ17. Lock striping: на каждый ключ — свой Mutex. Для каждого ключа выполни perKey конкурентных
