@@ -45,6 +45,20 @@ fun main() {
         "10. diagnostics  — StrictMode, thread dump/ANR-трейс, детект дедлока (цикл waits-for), Perfetto self-time",
     )
 
+    // Модуль Jetpack Compose: в работе (готовы темы 1–4).
+    val compose = listOf(
+        "1. recomposition — read tracking, fine-grained инвалидация, restartable-scope, skipping, derivedStateOf ✅",
+        "2. state         — remember, mutableStateOf, remember(key), rememberSaveable, derivedStateOf, hoisting ✅",
+        "3. snapshot      — MVCC-версии, изоляция чтений, атомарный apply, конфликты и merge-политика ✅",
+        "4. effects       — LaunchedEffect/DisposableEffect/SideEffect, ключи, scope, rememberUpdatedState ✅",
+        "5. composition   — slot table, позиционная мемоизация, key(), movable content ⬜",
+        "6. layout        — constraints, single-pass measure/layout, intrinsics, Layout ⬜",
+        "7. modifiers     — порядок цепочки, свёртка, Modifier.Node, семантика ⬜",
+        "8. phases        — Composition → Layout → Drawing, deferred reads ⬜",
+        "9. performance   — stability, @Stable/@Immutable, skippable/restartable, мемоизация лямбд ⬜",
+        "10. lists        — LazyColumn, key/contentType, переиспользование, рекомпозиция в списках ⬜",
+    )
+
     println("=".repeat(64))
     println("  Android Handbook")
     println("=".repeat(64))
@@ -57,6 +71,9 @@ fun main() {
 
     println("\n📱 Многопоточность в Android  (пакеты handbook.android.*)")
     android.forEach { println("   $it") }
+
+    println("\n🎨 Jetpack Compose  (пакеты handbook.compose.*)")
+    compose.forEach { println("   $it") }
 
     println()
     println("Для каждой темы: THEORY.md → реши задачи в Tasks → прогони тесты.")
