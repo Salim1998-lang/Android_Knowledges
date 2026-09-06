@@ -45,13 +45,13 @@ fun main() {
         "10. diagnostics  — StrictMode, thread dump/ANR-трейс, детект дедлока (цикл waits-for), Perfetto self-time",
     )
 
-    // Модуль Jetpack Compose: в работе (готовы темы 1–4).
+    // Модуль Jetpack Compose: в работе (готовы темы 1–5).
     val compose = listOf(
         "1. recomposition — read tracking, fine-grained инвалидация, restartable-scope, skipping, derivedStateOf ✅",
         "2. state         — remember, mutableStateOf, remember(key), rememberSaveable, derivedStateOf, hoisting ✅",
         "3. snapshot      — MVCC-версии, изоляция чтений, атомарный apply, конфликты и merge-политика ✅",
         "4. effects       — LaunchedEffect/DisposableEffect/SideEffect, ключи, scope, rememberUpdatedState ✅",
-        "5. composition   — slot table, позиционная мемоизация, key(), movable content ⬜",
+        "5. composition   — slot table, позиционная мемоизация, key(), movable content ✅",
         "6. layout        — constraints, single-pass measure/layout, intrinsics, Layout ⬜",
         "7. modifiers     — порядок цепочки, свёртка, Modifier.Node, семантика ⬜",
         "8. phases        — Composition → Layout → Drawing, deferred reads ⬜",

@@ -156,7 +156,7 @@ slot table, фазы кадра) и что спрашивают на собес�
 Механику Compose-рантайма моделируем **детерминированно на чистой JVM** (без Compose-рантайма,
 Android SDK и эмулятора) — идеи 1:1 переносятся на настоящий `androidx.compose.*`.
 
-> Модуль **в работе**: готовы темы 1–4 (рекомпозиция, состояние, snapshot, эффекты); остальные — в плане (см. таблицу).
+> Модуль **в работе**: готовы темы 1–5 (рекомпозиция, состояние, snapshot, эффекты, композиция); остальные — в плане (см. таблицу).
 
 ```
 src/main/kotlin/handbook/compose/
@@ -176,7 +176,7 @@ src/test/kotlin/handbook/compose/
 | 2 | Состояние | `handbook.compose.state` | `remember` как кэш по позиции в slot table, `remember(key)` (сброс при смене ключа, бесполезный remember при ключе-«шуме»), `mutableStateOf` обязательно в `remember` (иначе записи теряются), `rememberSaveable` переживает поворот и смерть процесса (`Bundle`/`Saver`, restore), `derivedStateOf` гасит шум частого входа (пересчёт vs инвалидация), state hoisting (stateless `value`+`onValueChange`, single source of truth, LCA-цель, over-hoisting и prop drilling) | ✅ |
 | 3 | Snapshot-система | `handbook.compose.snapshot` | MVCC: состояние как цепочка версионированных записей, чтение по версии (наибольшая `≤ base`), read isolation (снапшот «застыл», стабильные чтения, скрытые записи), своя незакоммиченная запись, атомарный `apply` («всё или ничего», `withMutableSnapshot`), конфликты (пересечение записей с глобально изменёнными), merge-политика (`previous`/`current`/`applied` → значение или конфликт), результат apply (SUCCESS/MERGED/FAILURE), два конкурентных снапшота, `snapshotFlow` (distinctUntilChanged) | ✅ |
 | 4 | Эффекты | `handbook.compose.effects` | жизненный цикл эффектов (START/DISPOSE), `LaunchedEffect(key)` (перезапуск при смене ключа, один запуск на `Unit`), `DisposableEffect` (`onDispose`, dispose-before-start), `SideEffect` (после каждой композиции), симуляция по кадрам (вход/смена/выход, счётчики launch/dispose), `rememberCoroutineScope` (запуск из событий, отмена с композицией), `rememberUpdatedState` (свежее значение без перезапуска, гашение restart-шторма), порядок применения изменений (сначала все dispose, потом все start) | ✅ |
-| 5 | Slot table и композиция | `handbook.compose.composition` | позиционная мемоизация, `key()`, movable content, дерево композиции | ⬜ |
+| 5 | Slot table и композиция | `handbook.compose.composition` | slot table и позиционная мемоизация (идентичность = позиция vs id), переиспользование слотов, ловушка списков без `key()` (reorder/insert перепутывает состояние), `key(id)` (состояние следует за элементом), диф с ключами (reused/added/removed, карта переноса слотов), уникальность ключей и области ключей (уникальность среди соседей), `movableContentOf` (перенос поддерева с сохранением состояния), «сколько состояний уцелело» с ключами и без | ✅ |
 | 6 | Измерение и раскладка | `handbook.compose.layout` | constraints, single-pass measure/layout, intrinsics, `Layout` | ⬜ |
 | 7 | Модификаторы | `handbook.compose.modifiers` | порядок в цепочке, свёртка, `Modifier.Node`, семантика | ⬜ |
 | 8 | Фазы кадра | `handbook.compose.phases` | Composition → Layout → Drawing, deferred reads (`graphicsLayer`, offset-lambda) | ⬜ |
