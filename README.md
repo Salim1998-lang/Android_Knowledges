@@ -156,7 +156,7 @@ slot table, фазы кадра) и что спрашивают на собес�
 Механику Compose-рантайма моделируем **детерминированно на чистой JVM** (без Compose-рантайма,
 Android SDK и эмулятора) — идеи 1:1 переносятся на настоящий `androidx.compose.*`.
 
-> Модуль **в работе**: готовы темы 1–7 (рекомпозиция, состояние, snapshot, эффекты, композиция, раскладка, модификаторы); остальные — в плане (см. таблицу).
+> Модуль **в работе**: готовы темы 1–8 (рекомпозиция, состояние, snapshot, эффекты, композиция, раскладка, модификаторы, фазы кадра); остальные — в плане (см. таблицу).
 
 ```
 src/main/kotlin/handbook/compose/
@@ -179,7 +179,7 @@ src/test/kotlin/handbook/compose/
 | 5 | Slot table и композиция | `handbook.compose.composition` | slot table и позиционная мемоизация (идентичность = позиция vs id), переиспользование слотов, ловушка списков без `key()` (reorder/insert перепутывает состояние), `key(id)` (состояние следует за элементом), диф с ключами (reused/added/removed, карта переноса слотов), уникальность ключей и области ключей (уникальность среди соседей), `movableContentOf` (перенос поддерева с сохранением состояния), «сколько состояний уцелело» с ключами и без | ✅ |
 | 6 | Измерение и раскладка | `handbook.compose.layout` | `Constraints` как договор о размере (coerce, tight/loose, bounded/unbounded), модификаторы размера через constraints (`fillMax`/`size`/`requiredSize`/`padding`), single-pass измерение (каждый ребёнок мерится один раз), размеры и расстановка `Column`/`Row`/`Box`, constraints ребёнку (fill → tight), measure policy (`Layout`), intrinsics и их цена (доп. проход), `weight`-распределение, placement (`Alignment.Center`) | ✅ |
 | 7 | Модификаторы | `handbook.compose.modifiers` | `Modifier` как упорядоченный список и моноид (`then` + пустая единица), свёртка `foldIn`/`foldOut`, влияние ПОРЯДКА на размер (constraints вниз, размер вверх), на фон и область клика, `Modifier.Node` и переиспользование по равенству элемента (attach/update/detach lifecycle), `composed` vs `Node` (пересоздание состояния), семантика и слияние потомков (`mergeDescendants`) | ✅ |
-| 8 | Фазы кадра | `handbook.compose.phases` | Composition → Layout → Drawing, deferred reads (`graphicsLayer`, offset-lambda) | ⬜ |
+| 8 | Фазы кадра | `handbook.compose.phases` | Composition → Layout → Drawing, инвалидация по фазе чтения, deferred reads (`graphicsLayer`, offset-lambda) | ✅ |
 | 9 | Производительность | `handbook.compose.performance` | stability, `@Stable`/`@Immutable`, skippable/restartable, мемоизация лямбд | ⬜ |
 | 10 | Ленивые списки | `handbook.compose.lists` | `LazyColumn`, `key`/`contentType`, переиспользование, рекомпозиция в списках | ⬜ |
 
